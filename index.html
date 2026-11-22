@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>奥特曼卡片</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* 布局：一屏工地舞台（天空 + 工程车 + 土堆），底部黄黑警示条上放大按钮；翻卡、卡册、选车都是全屏层 */
+:root{
+  --bg:#BDE9FF; --sky1:#6CCBFF; --sky2:#DDF5FF; --hill:#8ED07E; --hill2:#6DBE63;
+  --g1:#C98A4B; --g2:#A96C34; --far:rgba(30,60,110,.16); --sun:#FFD54A; --cloud:#FFFFFF; --starop:0;
+  --ink:#1B2246; --muted:#55608C; --title:#D61F2A; --title-edge:#FFFFFF;
+  --panel:rgba(255,255,255,.92); --panel-ink:#1B2246; --ring:#FFFFFF;
+  --timer-off:#C9D3E6; --album-bg:#EAF7FF; --lock:#D7E4F2; --lock-edge:#A9BAD0;
+  --display:"ZCOOL KuaiLe","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --latin:"Lilita One","ZCOOL KuaiLe","Arial Rounded MT Bold",system-ui,sans-serif;
+  --body:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1338; --sky1:#0A1033; --sky2:#2A3C80; --hill:#2C5A49; --hill2:#22493B;
+    --g1:#7E5631; --g2:#5E3E20; --far:rgba(200,215,255,.13); --sun:#F3EFD2; --cloud:rgba(255,255,255,.22); --starop:1;
+    --ink:#F1F3FF; --muted:#AEB7DE; --title:#FFD54A; --title-edge:#1B2246;
+    --panel:rgba(24,32,78,.92); --panel-ink:#F1F3FF; --ring:#8D9AC8;
+    --timer-off:#34416E; --album-bg:#101945; --lock:#1D2858; --lock-edge:#3D4A80;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1338; --sky1:#0A1033; --sky2:#2A3C80; --hill:#2C5A49; --hill2:#22493B;
+  --g1:#7E5631; --g2:#5E3E20; --far:rgba(200,215,255,.13); --sun:#F3EFD2; --cloud:rgba(255,255,255,.22); --starop:1;
+  --ink:#F1F3FF; --muted:#AEB7DE; --title:#FFD54A; --title-edge:#1B2246;
+  --panel:rgba(24,32,78,.92); --panel-ink:#F1F3FF; --ring:#8D9AC8;
+  --timer-off:#34416E; --album-bg:#101945; --lock:#1D2858; --lock-edge:#3D4A80;
+  color-scheme:dark;
+}
+html{height:100%;box-sizing:border-box;background:linear-gradient(var(--sky1) 0 50%, var(--g1) 50% 100%)}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:4px solid #2EC5FF;outline-offset:3px}
+#app{height:100%;display:flex;flex-direction:column;background:linear-gradient(var(--sky1),var(--sky2) 75%)}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:10px 4px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.brand{font-family:var(--display);font-size:clamp(20px,5.6vw,36px);line-height:1.1;color:var(--title);
+  text-shadow:2px 2px 0 var(--title-edge),-2px 2px 0 var(--title-edge),2px -2px 0 var(--title-edge),-2px -2px 0 var(--title-edge),0 5px 0 rgba(0,0,0,.12);
+  min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-short{display:none}
+@media (max-width:440px){.b-long{display:none}.b-short{display:inline}}
+.top-actions{display:flex;gap:8px;flex-shrink:0}
+.chip{height:52px;min-width:52px;border-radius:26px;border:3px solid var(--ink);background:var(--panel);color:var(--panel-ink);
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 11px;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.chip:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.chip svg{width:28px;height:28px;flex-shrink:0}
+.chip .count{font-family:var(--latin);font-size:22px;font-variant-numeric:tabular-nums}
+#albumBtn.bump{animation:bump .5s}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.25)}70%{transform:scale(.95)}100%{transform:scale(1)}}
+
+.stage{flex:1;min-height:0;position:relative;cursor:pointer;touch-action:none}
+#scene{position:absolute;inset:0;width:100%;height:100%;overflow:visible;display:block}
+.c-hill{fill:var(--hill)} .c-hill2{fill:var(--hill2)} .c-g1{fill:var(--g1)} .c-g2{fill:var(--g2)}
+.c-far{fill:var(--far)} .c-farS{stroke:var(--far)} .c-sun{fill:var(--sun)} .c-cloud{fill:var(--cloud)}
+.stars{opacity:var(--starop)}
+.machine{display:none} .machine.on{display:inline}
+#arm{transform-box:view-box;transform-origin:160px 170px;transition:transform .26s cubic-bezier(.4,1.6,.6,1)}
+.shake{animation:shake .3s}
+@keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-3px,1px)}50%{transform:translate(3px,-1px)}75%{transform:translate(-2px,0)}}
+.blink{transform-box:fill-box;transform-origin:center;animation:blink 4.5s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+#dozerMove{transition:transform .12s linear}
+#mound{transform-box:view-box;transform-origin:322px 230px;transition:transform .35s cubic-bezier(.4,1.6,.6,1)}
+#moundGlow{transition:opacity .4s}
+.popper{transform-box:view-box;transform-origin:322px 150px;opacity:0;transform:translateY(70px) scale(.4);transition:transform .6s cubic-bezier(.3,1.6,.5,1),opacity .3s;pointer-events:none}
+.popper.up{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+#orb.up .orb-body{animation:bob 1.6s ease-in-out infinite}
+.orb-body{transform-box:view-box;transform-origin:322px 150px}
+@keyframes bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.06)}}
+#orbRing{transform-box:view-box;transform-origin:322px 150px;animation:spin 3s linear infinite;opacity:0}
+#orb.super #orbRing{opacity:1}
+#pointer{opacity:0;transition:opacity .3s}
+#orb.up ~ #pointer{opacity:1}
+#pointer path{animation:point .8s ease-in-out infinite}
+@keyframes point{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+#pour{opacity:0;transition:opacity .3s}
+#pour.on{opacity:1}
+#drumStripes{transition:transform .5s cubic-bezier(.3,.8,.4,1)}
+
+.controls{position:relative;background:var(--g1);display:flex;align-items:center;justify-content:center;gap:clamp(10px,4vw,28px);
+  padding-block:22px 16px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.controls::before{content:"";position:absolute;left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(-45deg,#FFC21A 0 14px,#1B2246 14px 28px)}
+.meter{display:flex;gap:7px;flex-wrap:wrap;max-width:52vw;justify-content:center}
+.light{width:clamp(22px,6.2vw,40px);aspect-ratio:1;border-radius:50%;background:var(--timer-off);border:4px solid var(--ring);
+  box-shadow:inset 0 -4px 0 rgba(0,0,0,.15);transition:background .2s,box-shadow .2s,transform .2s}
+.light.on{background:radial-gradient(circle at 38% 32%,#E8FDFF,#5EDCFF 45%,#1592D8);box-shadow:0 0 14px 4px rgba(46,197,255,.75);transform:scale(1.12)}
+.holdbar{width:clamp(90px,30vw,180px);height:26px;border-radius:13px;border:4px solid var(--ring);background:var(--timer-off);overflow:hidden}
+.holdbar i{display:block;height:100%;width:0;background:radial-gradient(circle at 50% 30%,#E8FDFF,#5EDCFF 45%,#1592D8);box-shadow:0 0 12px rgba(46,197,255,.8)}
+#actBtn{--btn:#FFC21A;--btn-dk:#C98200;height:clamp(76px,13vh,96px);min-width:clamp(160px,44vw,260px);border-radius:999px;border:5px solid #1B2246;
+  background:var(--btn);color:#1B2246;font-family:var(--latin);font-size:clamp(32px,9vw,48px);letter-spacing:.03em;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 24px;box-shadow:0 9px 0 var(--btn-dk),0 12px 18px rgba(0,0,0,.25);touch-action:none}
+#actBtn svg{width:clamp(44px,11vw,58px);height:auto}
+#actBtn:active,#actBtn.held{transform:translateY(7px);box-shadow:0 2px 0 var(--btn-dk)}
+#actBtn.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{scale:1}50%{scale:1.06}}
+#actBtn.open{--btn:#7FDBFF;--btn-dk:#1F8FCC}
+#actBtn.open.r2{--btn:#CDA8FF;--btn-dk:#7C45E6}
+#actBtn.open.r3{--btn:#FFE066;--btn-dk:#D99A00}
+#actBtn[disabled]{opacity:.6;animation:none}
+
+/* 卡片：参考集换式卡牌的金属边框 + 全幅大图 + 稀有度角标 + 战力 */
+.card{container-type:inline-size;aspect-ratio:5/7;width:100%;max-width:100%;position:relative;perspective:1200px}
+.card-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.3,1.35,.5,1)}
+.card-inner.facedown{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:6.5cqw;padding:3cqw;background:var(--frameG);box-shadow:0 1.6cqw 0 rgba(0,0,0,.3),inset 0 0 0 .6cqw rgba(255,255,255,.55)}
+.back{transform:rotateY(180deg);--frameG:linear-gradient(135deg,#F2F4F8,#9AA3B5 45%,#FFFFFF 55%,#7A8396)}
+.face>.in{position:relative;width:100%;height:100%;border-radius:4.4cqw;overflow:hidden;box-shadow:inset 0 0 0 .5cqw rgba(0,0,0,.45)}
+.back svg{width:100%;height:100%;display:block}
+.r1{--frameG:linear-gradient(135deg,#EAF4FF,#6E9BD6 38%,#F7FBFF 52%,#4C73AE 78%,#BFD6F5);--bgA:#4C7CFF;--bgB:#0E1A5C;--ray:rgba(150,200,255,.35)}
+.r2{--frameG:linear-gradient(135deg,#F7EEFF,#8B55E0 38%,#FFFFFF 52%,#5A28B0 78%,#E3CCFF);--bgA:#B47CFF;--bgB:#250C5E;--ray:rgba(220,180,255,.38)}
+.r3{--frameG:linear-gradient(135deg,#FFF9CF,#E8A80C 36%,#FFFDE8 50%,#B8730A 74%,#FFE47A);--bgA:#FFE27A;--bgB:#9C3E04;--ray:rgba(255,240,170,.5)}
+.front .in{background:radial-gradient(circle at 50% 40%,var(--bgA),var(--bgB) 72%)}
+.k-hero .front .in::before{content:"";position:absolute;inset:-30%;background:repeating-conic-gradient(from 0deg at 50% 45%,var(--ray) 0deg 7deg,transparent 7deg 16deg)}
+.k-hero .front .in::after{content:"";position:absolute;left:0;right:0;bottom:12%;height:22%;pointer-events:none;
+  background:linear-gradient(transparent,rgba(5,8,30,.55)),repeating-linear-gradient(90deg,rgba(10,16,50,.85) 0 7%,transparent 7% 9%,rgba(10,16,50,.85) 9% 13%,transparent 13% 17%);-webkit-mask:linear-gradient(transparent 0 30%,#000 30%);mask:linear-gradient(transparent 0 30%,#000 30%)}
+.art{position:absolute;left:0;right:0;top:4%;bottom:14%;z-index:1}
+.k-hero .art{top:3%;bottom:15%}
+.art svg{width:100%;height:100%;display:block}
+.k-car .art,.k-air .art,.k-army .art{top:0;bottom:0}
+.rk{position:absolute;left:3cqw;top:2.6cqw;z-index:3;font-family:var(--latin);font-size:11cqw;line-height:1;letter-spacing:.02em;color:#FFFFFF;
+  -webkit-text-stroke:.9cqw #1B2246;paint-order:stroke fill;text-shadow:0 .8cqw 0 rgba(0,0,0,.35)}
+.r2 .rk{color:#E8D2FF} .r3 .rk{color:#FFE066}
+.pw{position:absolute;right:3cqw;top:3cqw;z-index:3;display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+.pw b{font-family:var(--latin);font-weight:400;font-size:9cqw;color:#FFFFFF;-webkit-text-stroke:.8cqw #1B2246;paint-order:stroke fill}
+.pw small{font-family:var(--display);font-size:4.6cqw;color:#1B2246;background:#FFD447;border-radius:2cqw;padding:.4cqw 1.6cqw;margin-bottom:.6cqw}
+.plate{position:absolute;left:-1cqw;right:-1cqw;bottom:0;height:17%;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4cqw;
+  background:linear-gradient(180deg,#26338A,#0F1648);border-top:1.4cqw solid #FFD447;box-shadow:0 -1cqw 2cqw rgba(0,0,0,.35)}
+.r1 .plate{border-top-color:#8FC0FF} .r2 .plate{border-top-color:#C9A2FF}
+.plate .st{color:#FFD447;font-size:5.6cqw;line-height:1;letter-spacing:.15em}
+.plate .nm{font-family:var(--display);color:#FFFFFF;font-size:10cqw;line-height:1.05;white-space:nowrap;text-shadow:0 .6cqw 0 rgba(0,0,0,.5)}
+.plate .nm.long{font-size:8.4cqw}
+.holo{position:absolute;inset:0;z-index:5;pointer-events:none;mix-blend-mode:screen;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.7) 42%,rgba(160,230,255,.45) 47%,rgba(255,170,240,.4) 52%,transparent 64%);background-size:260% 100%;animation:shine 2.6s linear infinite}
+.r2 .holo{opacity:.6}
+@keyframes shine{from{background-position:130% 0}to{background-position:-130% 0}}
+
+.layer{position:fixed;inset:0;z-index:30;padding-top:max(14px, env(safe-area-inset-top, 0px));padding-bottom:max(14px, env(safe-area-inset-bottom, 0px));
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+#reveal{background:rgba(8,12,38,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1.8vh,16px);overflow:hidden}
+#reveal .rays{position:absolute;left:50%;top:34%;width:190vmax;height:190vmax;translate:-50% -50%;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,var(--ray,#5EDCFF) 0deg 9deg,transparent 9deg 18deg);opacity:.28;
+  -webkit-mask:radial-gradient(circle,#000 8%,transparent 45%);mask:radial-gradient(circle,#000 8%,transparent 45%);animation:spin 22s linear infinite}
+#revealCard{position:relative;width:min(58vw,36vh,290px);cursor:pointer;transition:transform .55s cubic-bezier(.5,-.3,.7,1),opacity .55s;flex-shrink:0}
+#revealCard.pop{animation:popIn .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes popIn{from{transform:scale(.2) rotate(-12deg);opacity:0}to{transform:scale(1);opacity:1}}
+.rinfo{position:relative;text-align:center;color:#FFFFFF;display:flex;flex-direction:column;align-items:center;gap:6px;transition:opacity .3s;max-width:34em;min-height:0}
+.rinfo.hide{opacity:0}
+.rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.rname{font-family:var(--display);font-size:clamp(28px,7.5vw,46px);line-height:1.1;text-shadow:0 4px 0 rgba(0,0,0,.35)}
+.rtag{font-size:clamp(14px,3.8vw,18px);color:#FFE27A;font-weight:600}
+.rintro{font-size:clamp(15px,4vw,18px);line-height:1.6;color:#E6EBFF;text-align:left;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px 14px;max-height:22vh;overflow-y:auto;text-wrap:pretty}
+.rbadge{font-family:var(--display);font-size:clamp(16px,4.2vw,22px);padding:2px 14px;border-radius:999px;background:#E3262E;color:#FFFFFF;transform:rotate(-4deg);border:3px solid #FFFFFF;white-space:nowrap}
+.rbadge.dup{background:#2E8BFF}
+.rbtns{position:relative;display:flex;gap:14px;align-items:center;transition:opacity .3s;flex-shrink:0}
+.rbtns.hide{opacity:0;pointer-events:none}
+.bigbtn{height:68px;padding:0 30px;border-radius:999px;border:5px solid #1B2246;background:#FFC21A;color:#1B2246;font-family:var(--latin);font-size:clamp(26px,7vw,34px);letter-spacing:.03em;box-shadow:0 7px 0 #C98200}
+.bigbtn:active{transform:translateY(5px);box-shadow:0 2px 0 #C98200}
+.roundbtn{width:68px;height:68px;border-radius:50%;border:5px solid #1B2246;background:#FFFFFF;color:#1B2246;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 7px 0 #A9B1C2;flex-shrink:0}
+.roundbtn:active{transform:translateY(5px);box-shadow:0 2px 0 #A9B1C2}
+.roundbtn svg{width:34px;height:34px}
+
+#flash{position:fixed;inset:0;z-index:40;background:#FFFFFF;opacity:0;pointer-events:none}
+#flash.go{animation:flash .6s ease-out}
+@keyframes flash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+#fx{position:fixed;inset:0;z-index:45;pointer-events:none;width:100%;height:100%}
+
+#album{z-index:25;background:var(--album-bg);display:flex;flex-direction:column;padding-bottom:0}
+.al-head{display:flex;align-items:center;gap:12px;padding-block:4px 10px}
+.al-title{font-family:var(--display);font-size:clamp(26px,6.5vw,38px);color:var(--title);flex:1;min-width:0;
+  text-shadow:2px 2px 0 var(--title-edge),-2px 2px 0 var(--title-edge),2px -2px 0 var(--title-edge),-2px -2px 0 var(--title-edge)}
+.al-prog{display:flex;align-items:center;gap:10px;padding-bottom:12px}
+.bar{flex:1;height:22px;border-radius:11px;background:var(--lock);border:3px solid var(--ink);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(-45deg,#FFC21A 0 12px,#FFB000 12px 24px);transition:width .6s}
+.al-num{font-family:var(--latin);font-size:24px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.al-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:max(24px, env(safe-area-inset-bottom, 0px))}
+.al-sec{font-family:var(--display);font-size:24px;color:var(--ink);margin:6px 0 10px;display:flex;align-items:center;gap:8px}
+.al-sec small{font-family:var(--latin);font-size:16px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(104px,27vw),1fr));gap:14px;margin-bottom:22px;padding-top:8px}
+.slot{position:relative;border:0;background:none;padding:0;display:block;width:100%}
+.slot:active{transform:scale(.96)}
+.lock{aspect-ratio:5/7;border-radius:12px;background:var(--lock);border:3px dashed var(--lock-edge);display:flex;align-items:center;justify-content:center;
+  font-family:var(--latin);font-size:44px;color:var(--lock-edge)}
+.cnt{position:absolute;top:-8px;right:-6px;z-index:2;min-width:34px;height:30px;border-radius:15px;background:#E3262E;color:#FFFFFF;border:3px solid #FFFFFF;
+  font-family:var(--latin);font-size:16px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.al-foot{display:flex;justify-content:center;padding-block:4px 8px}
+#resetBtn{border:0;background:none;color:var(--muted);font-size:15px;text-decoration:underline;padding:10px}
+#resetBtn.warn{color:#E3262E;font-weight:700}
+
+#chooser{z-index:32;background:rgba(8,12,38,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#FFFFFF;text-align:center}
+.ch-title{font-family:var(--display);font-size:clamp(28px,7.5vw,44px);text-shadow:0 4px 0 rgba(0,0,0,.35)}
+.ch-sub{font-size:clamp(15px,4vw,19px);color:#FFE27A;font-weight:600}
+.ch-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:min(100%,560px)}
+.ch-item{border:5px solid #1B2246;border-radius:22px;background:#FFF4D2;color:#1B2246;padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 7px 0 #C98200}
+.ch-item.cur{background:#FFE066;outline:5px solid #5EDCFF;outline-offset:3px}
+.ch-item:active{transform:translateY(5px);box-shadow:0 2px 0 #C98200}
+.ch-item svg{width:100%;max-width:170px;height:auto}
+.ch-name{font-family:var(--display);font-size:clamp(20px,5vw,26px)}
+.ch-verb{font-family:var(--latin);font-size:clamp(18px,4.6vw,24px);color:#D61F2A}
+
+#start{z-index:35;background:linear-gradient(var(--sky1),var(--sky2) 70%,var(--g1) 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,3vh,26px);text-align:center}
+.st-title{font-family:var(--display);font-size:clamp(40px,11vw,72px);line-height:1.05;color:var(--title);text-wrap:balance;
+  text-shadow:3px 3px 0 var(--title-edge),-3px 3px 0 var(--title-edge),3px -3px 0 var(--title-edge),-3px -3px 0 var(--title-edge),0 8px 0 rgba(0,0,0,.15)}
+.st-sub{font-size:clamp(17px,4.4vw,22px);color:var(--ink);font-weight:600}
+.st-art{display:flex;align-items:flex-end;justify-content:center;width:min(92vw,520px);height:min(38vh,300px)}
+.st-art svg{height:100%;width:auto;max-width:50%}
+.st-art .hero{animation:float 2.4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+#startBtn{height:92px;padding:0 48px;font-size:clamp(34px,9vw,48px);animation:pulse 1.6s ease-in-out infinite}
+
+@media (prefers-reduced-motion: reduce){
+  #reveal .rays,#orbRing,.holo,.blink,#pointer path,#actBtn.pulse,#startBtn,.st-art .hero,#orb.up .orb-body{animation:none}
+}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="b-long">奥特曼卡片</span><span class="b-short">奥特曼卡片</span></div>
+    <div class="top-actions">
+      <button class="chip" id="machineBtn" aria-label="Machines" hidden>
+        <svg viewBox="0 0 64 48" aria-hidden="true"><g stroke="currentColor" stroke-width="3" stroke-linejoin="round" fill="none"><rect x="4" y="34" width="36" height="11" rx="5.5"/><rect x="6" y="20" width="30" height="15" rx="3"/><rect x="8" y="8" width="16" height="14" rx="3"/><path d="M30 24 L46 8 L50 11 L36 28 Z"/><path d="M46 8 L56 24 L52 27 L43 13 Z"/><path d="M50 24 L62 26 L59 38 L47 33 Z"/></g></svg>
+      </button>
+      <button class="chip" id="soundBtn" aria-label="Sound">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 12h5l7-6v20l-7-6H5z" fill="currentColor"/><path id="waves" d="M21 11q3 5 0 10M24 7q6 9 0 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path id="mutex" d="M21 11l8 10M29 11l-8 10" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="display:none"/></svg>
+      </button>
+      <button class="chip" id="albumBtn" aria-label="Cards">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9" y="4" width="17" height="23" rx="3" fill="#9B5CF6" stroke="currentColor" stroke-width="2.4" transform="rotate(10 17 16)"/><rect x="5" y="5" width="17" height="23" rx="3" fill="#E3262E" stroke="currentColor" stroke-width="2.4"/><circle cx="13.5" cy="15" r="4" fill="#5EDCFF" stroke="currentColor" stroke-width="2"/></svg>
+        <span class="count" id="albumCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage" aria-label="挖宝工地">
+    <svg id="scene" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+      <defs>
+        <radialGradient id="orbG" cx=".38" cy=".32" r=".75">
+          <stop offset="0" stop-color="#FFFFFF"/><stop id="orbS1" offset=".35" stop-color="#BDF0FF"/><stop id="orbS2" offset="1" stop-color="#2E9BFF"/>
+        </radialGradient>
+        <radialGradient id="glowG">
+          <stop id="glowS1" offset="0" stop-color="#7FD8FF" stop-opacity=".95"/><stop id="glowS2" offset="1" stop-color="#7FD8FF" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="ringG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#FF5A5A"/><stop offset=".33" stop-color="#FFD84A"/><stop offset=".66" stop-color="#5EDCFF"/><stop offset="1" stop-color="#B07CFF"/>
+        </linearGradient>
+        <clipPath id="drumClip"><ellipse cx="0" cy="0" rx="58" ry="30"/></clipPath>
+      </defs>
+      <g class="stars" fill="#FFFFFF">
+        <circle cx="30" cy="30" r="1.8"/><circle cx="90" cy="60" r="1.4"/><circle cx="150" cy="22" r="2"/><circle cx="210" cy="70" r="1.3"/>
+        <circle cx="260" cy="30" r="1.6"/><circle cx="380" cy="90" r="1.5"/><circle cx="-40" cy="80" r="1.6"/><circle cx="460" cy="40" r="1.8"/>
+        <circle cx="-120" cy="30" r="1.4"/><circle cx="540" cy="100" r="1.4"/><circle cx="120" cy="110" r="1.2"/><circle cx="330" cy="130" r="1.2"/>
+      </g>
+      <circle class="c-sun" cx="350" cy="44" r="24"/>
+      <g class="c-cloud">
+        <ellipse cx="70" cy="44" rx="34" ry="12"/><ellipse cx="88" cy="36" rx="20" ry="12"/>
+        <ellipse cx="250" cy="84" rx="28" ry="9"/><ellipse cx="-80" cy="70" rx="34" ry="11"/><ellipse cx="480" cy="64" rx="30" ry="10"/>
+      </g>
+      <g class="c-far">
+        <rect x="196" y="60" width="9" height="170"/><rect x="128" y="54" width="170" height="7"/><rect x="128" y="61" width="22" height="12"/>
+        <rect x="-60" y="120" width="70" height="110"/><rect x="420" y="110" width="80" height="120"/>
+      </g>
+      <line x1="270" y1="61" x2="270" y2="110" class="c-farS" stroke-width="2"/>
+      <ellipse class="c-hill" cx="60" cy="246" rx="260" ry="60"/>
+      <ellipse class="c-hill2" cx="390" cy="250" rx="240" ry="50"/>
+      <rect class="c-g1" x="-1000" y="226" width="2400" height="200"/>
+      <rect class="c-g2" x="-1000" y="226" width="2400" height="5"/>
+      <g fill="#7A4B22" opacity=".5"><circle cx="20" cy="250" r="3"/><circle cx="120" cy="262" r="2.5"/><circle cx="220" cy="248" r="3"/><circle cx="360" cy="268" r="3"/><circle cx="-60" cy="262" r="3"/><circle cx="460" cy="252" r="3"/></g>
+      <g stroke="#1B2246" stroke-width="2.5" stroke-linejoin="round">
+        <path d="M-14 228 L-6 196 L2 228 Z" fill="#FF7A1A"/><rect x="-20" y="226" width="28" height="5" rx="2" fill="#FF7A1A"/>
+      </g>
+
+      <circle id="moundGlow" cx="322" cy="200" r="78" fill="url(#glowG)" opacity="0"/>
+      <g id="mound">
+        <path d="M248 231 Q262 176 322 168 Q382 176 396 231 Z" class="c-g2" stroke="#1B2246" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M268 206 Q300 186 340 192" fill="none" stroke="#7A4B22" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+        <circle cx="296" cy="214" r="5" fill="#8A6A4A"/><circle cx="352" cy="206" r="4" fill="#8A6A4A"/><circle cx="330" cy="186" r="3" fill="#8A6A4A"/>
+      </g>
+
+      <g id="rock" class="popper">
+        <path d="M300 168 Q298 142 318 136 Q340 132 346 150 Q352 170 336 174 Q312 178 300 168 Z" fill="#9097A6" stroke="#1B2246" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M312 150 Q316 147 320 150 M328 150 Q332 147 336 150" fill="none" stroke="#1B2246" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M318 162 Q324 158 330 162" fill="none" stroke="#1B2246" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="352" y="130" font-family="Lilita One, Arial Rounded MT Bold, sans-serif" font-size="22" fill="#FFFFFF" stroke="#1B2246" stroke-width="1">?</text>
+      </g>
+      <g id="orb" class="popper">
+        <circle cx="322" cy="150" r="56" fill="transparent"/>
+        <circle id="orbRing" cx="322" cy="150" r="40" fill="none" stroke="url(#ringG)" stroke-width="6" stroke-dasharray="14 8"/>
+        <g class="orb-body">
+          <circle cx="322" cy="150" r="31" fill="url(#orbG)" stroke="#FFFFFF" stroke-width="4"/>
+          <path d="M322 132 L327 144 L340 145 L330 153 L333 166 L322 159 L311 166 L314 153 L304 145 L317 144 Z" fill="#FFFFFF" opacity=".95"/>
+          <ellipse cx="311" cy="136" rx="7" ry="4" fill="#FFFFFF" opacity=".8" transform="rotate(-30 311 136)"/>
+        </g>
+      </g>
+      <g id="pointer"><path d="M312 84 L332 84 L332 98 L342 98 L322 116 L302 98 L312 98 Z" fill="#FFFFFF" stroke="#1B2246" stroke-width="3" stroke-linejoin="round"/></g>
+
+      <!-- 挖掘机 -->
+      <g id="m-digger" class="machine" stroke="#1B2246" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="38" y="194" width="150" height="36" rx="18" fill="#30364C"/>
+        <g fill="#8A92A8" stroke-width="2.5"><circle cx="58" cy="212" r="9"/><circle cx="86" cy="212" r="7"/><circle cx="113" cy="212" r="7"/><circle cx="140" cy="212" r="7"/><circle cx="168" cy="212" r="9"/></g>
+        <rect x="48" y="146" width="126" height="52" rx="10" fill="#FFC21A"/>
+        <rect x="48" y="180" width="126" height="9" fill="#1B2246" stroke="none"/>
+        <rect x="56" y="92" width="66" height="60" rx="10" fill="#FFC21A"/>
+        <rect x="64" y="100" width="50" height="38" rx="7" fill="#BFEFFF"/>
+        <g class="blink" stroke-width="2.5"><circle cx="79" cy="115" r="7" fill="#FFFFFF"/><circle cx="99" cy="115" r="7" fill="#FFFFFF"/><circle cx="81" cy="116" r="3.6" fill="#1B2246" stroke="none"/><circle cx="101" cy="116" r="3.6" fill="#1B2246" stroke="none"/></g>
+        <path d="M81 128 Q89 134 97 128" fill="none" stroke-width="2.8"/>
+        <rect x="83" y="82" width="14" height="10" rx="3" fill="#30364C" stroke-width="2.5"/>
+        <circle class="beacon" cx="90" cy="80" r="6" fill="#FF9A1A" stroke-width="2.5"/>
+        <g id="arm">
+          <path d="M150 172 L232 92 L250 104 L172 182 Z" fill="#FFC21A"/>
+          <line x1="168" y1="160" x2="228" y2="104" stroke="#B9C0D3" stroke-width="5"/>
+          <path d="M232 92 L278 158 L262 168 L226 106 Z" fill="#FFC21A"/>
+          <path d="M260 158 L294 164 L286 204 L254 190 Z" fill="#6B7186"/>
+          <path d="M262 196 L266 206 L272 198 L276 208 L282 200 L286 204" fill="none" stroke-width="2.5"/>
+          <circle cx="160" cy="172" r="7" fill="#30364C" stroke-width="2.5"/><circle cx="240" cy="98" r="6" fill="#30364C" stroke-width="2.5"/><circle cx="268" cy="162" r="6" fill="#30364C" stroke-width="2.5"/>
+        </g>
+      </g>
+
+      <!-- 推土机 -->
+      <g id="m-dozer" class="machine" stroke="#1B2246" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+        <g id="dozerMove">
+          <rect x="30" y="192" width="150" height="38" rx="19" fill="#30364C"/>
+          <g fill="#8A92A8" stroke-width="2.5"><circle cx="50" cy="211" r="9"/><circle cx="80" cy="211" r="7"/><circle cx="108" cy="211" r="7"/><circle cx="136" cy="211" r="7"/><circle cx="160" cy="211" r="9"/></g>
+          <rect x="40" y="146" width="132" height="50" rx="9" fill="#FFAA1F"/>
+          <rect x="40" y="178" width="132" height="8" fill="#1B2246" stroke="none"/>
+          <rect x="150" y="108" width="11" height="40" fill="#30364C" stroke-width="2.5"/>
+          <rect x="52" y="90" width="72" height="60" rx="10" fill="#FFAA1F"/>
+          <rect x="60" y="98" width="56" height="38" rx="7" fill="#BFEFFF"/>
+          <g class="blink" stroke-width="2.5"><circle cx="78" cy="114" r="7" fill="#FFFFFF"/><circle cx="98" cy="114" r="7" fill="#FFFFFF"/><circle cx="80" cy="115" r="3.6" fill="#1B2246" stroke="none"/><circle cx="100" cy="115" r="3.6" fill="#1B2246" stroke="none"/></g>
+          <path d="M80 127 Q88 133 96 127" fill="none" stroke-width="2.8"/>
+          <circle class="beacon" cx="88" cy="84" r="6" fill="#FF9A1A" stroke-width="2.5"/>
+          <path d="M170 176 L192 176" stroke-width="9" stroke="#30364C"/>
+          <path d="M188 134 L208 128 Q224 176 214 230 L192 230 Q202 180 188 134 Z" fill="#8C93A8"/>
+        </g>
+      </g>
+
+      <!-- 大吊车 -->
+      <g id="m-crane" class="machine" stroke="#1B2246" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M112 184 L312 48 L322 60 L132 194 Z" fill="#FFC21A"/>
+        <path id="craneLattice" d="" fill="none" stroke-width="2" opacity=".6"/>
+        <g id="hook">
+          <line id="cable" x1="318" y1="54" x2="318" y2="124" stroke-width="2.5"/>
+          <g id="hookHead" transform="translate(0,0)">
+            <rect x="309" y="118" width="18" height="12" rx="3" fill="#30364C"/>
+            <path d="M318 130 L318 140 Q318 152 306 148" fill="none" stroke-width="4"/>
+          </g>
+        </g>
+        <rect x="20" y="186" width="190" height="26" rx="6" fill="#FFC21A"/>
+        <rect x="20" y="198" width="190" height="6" fill="#1B2246" stroke="none"/>
+        <rect x="96" y="168" width="60" height="22" rx="4" fill="#FFC21A"/>
+        <rect x="24" y="142" width="54" height="48" rx="9" fill="#FFC21A"/>
+        <rect x="31" y="150" width="40" height="28" rx="6" fill="#BFEFFF"/>
+        <g class="blink" stroke-width="2.2"><circle cx="44" cy="162" r="5.5" fill="#FFFFFF"/><circle cx="59" cy="162" r="5.5" fill="#FFFFFF"/><circle cx="45.5" cy="163" r="2.8" fill="#1B2246" stroke="none"/><circle cx="60.5" cy="163" r="2.8" fill="#1B2246" stroke="none"/></g>
+        <path d="M46 171 Q51.5 175 57 171" fill="none" stroke-width="2.4"/>
+        <circle class="beacon" cx="51" cy="138" r="5" fill="#FF9A1A" stroke-width="2.5"/>
+        <g fill="#30364C" stroke-width="3"><circle cx="46" cy="214" r="13"/><circle cx="86" cy="214" r="13"/><circle cx="150" cy="214" r="13"/><circle cx="186" cy="214" r="13"/></g>
+        <g fill="#B9C0D3" stroke="none"><circle cx="46" cy="214" r="5"/><circle cx="86" cy="214" r="5"/><circle cx="150" cy="214" r="5"/><circle cx="186" cy="214" r="5"/></g>
+      </g>
+
+      <!-- 搅拌车 -->
+      <g id="m-mixer" class="machine" stroke="#1B2246" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="16" y="190" width="208" height="16" rx="5" fill="#30364C"/>
+        <rect x="18" y="128" width="58" height="66" rx="10" fill="#F36B2B"/>
+        <rect x="26" y="137" width="42" height="32" rx="6" fill="#BFEFFF"/>
+        <g class="blink" stroke-width="2.2"><circle cx="40" cy="151" r="5.5" fill="#FFFFFF"/><circle cx="55" cy="151" r="5.5" fill="#FFFFFF"/><circle cx="41.5" cy="152" r="2.8" fill="#1B2246" stroke="none"/><circle cx="56.5" cy="152" r="2.8" fill="#1B2246" stroke="none"/></g>
+        <path d="M42 161 Q47.5 165 53 161" fill="none" stroke-width="2.4"/>
+        <circle class="beacon" cx="46" cy="124" r="5" fill="#FF9A1A" stroke-width="2.5"/>
+        <rect x="104" y="176" width="50" height="16" fill="#30364C"/>
+        <g transform="translate(146 150) rotate(-12)">
+          <ellipse cx="0" cy="0" rx="58" ry="30" fill="#F2F4F8"/>
+          <g clip-path="url(#drumClip)"><g id="drumStripes" fill="none" stroke="#F36B2B" stroke-width="11">
+            <path d="M-130 -34 Q-110 0 -124 36"/><path d="M-90 -34 Q-70 0 -84 36"/><path d="M-50 -34 Q-30 0 -44 36"/><path d="M-10 -34 Q10 0 -4 36"/><path d="M30 -34 Q50 0 36 36"/><path d="M70 -34 Q90 0 76 36"/>
+          </g></g>
+          <ellipse cx="0" cy="0" rx="58" ry="30" fill="none"/>
+        </g>
+        <path d="M200 150 L226 166 L222 172 L198 160 Z" fill="#8C93A8"/>
+        <path id="pour" d="M224 170 Q244 176 256 206 L250 210 Q240 186 222 176 Z" fill="#A9A9A9" stroke-width="2"/>
+        <g fill="#30364C" stroke-width="3"><circle cx="46" cy="210" r="15"/><circle cx="130" cy="210" r="15"/><circle cx="196" cy="210" r="15"/></g>
+        <g fill="#B9C0D3" stroke="none"><circle cx="46" cy="210" r="6"/><circle cx="130" cy="210" r="6"/><circle cx="196" cy="210" r="6"/></g>
+      </g>
+    </svg>
+  </main>
+
+  <footer class="controls">
+    <div class="meter" id="meter" aria-hidden="true"></div>
+    <button id="actBtn" class="pulse" aria-label="Dig">
+      <svg viewBox="0 0 64 48" aria-hidden="true" id="actIcon"><g stroke="#1B2246" stroke-width="3" stroke-linejoin="round"><rect x="4" y="34" width="36" height="11" rx="5.5" fill="#30364C"/><rect x="6" y="20" width="30" height="15" rx="3" fill="#FFFFFF"/><rect x="8" y="8" width="16" height="14" rx="3" fill="#FFFFFF"/><path d="M30 24 L46 8 L50 11 L36 28 Z" fill="#FFFFFF"/><path d="M46 8 L56 24 L52 27 L43 13 Z" fill="#FFFFFF"/><path d="M50 24 L62 26 L59 38 L47 33 Z" fill="#30364C"/></g></svg>
+      <span id="actLabel">Dig!</span>
+    </button>
+  </footer>
+</div>
+
+<div id="reveal" class="layer" hidden>
+  <div class="rays"></div>
+  <div id="revealCard"></div>
+  <div class="rinfo hide" id="rinfo">
+    <div class="rhead"><div class="rname" id="rName"></div><div class="rbadge" id="rBadge"></div></div>
+    <div class="rtag" id="rTag"></div>
+    <div class="rintro" id="rIntro"></div>
+  </div>
+  <div class="rbtns hide" id="rbtns">
+    <button class="roundbtn" id="againBtn" aria-label="Listen"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 12h5l7-6v20l-7-6H5z" fill="currentColor"/><path d="M21 11q3 5 0 10M24 7q6 9 0 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+    <button class="bigbtn" id="collectBtn">Save</button>
+  </div>
+</div>
+
+<div id="album" class="layer" hidden>
+  <div class="al-head">
+    <div class="al-title">我的卡册</div>
+    <button class="roundbtn" id="closeAlbum" aria-label="Close"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 8l16 16M24 8L8 24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></button>
+  </div>
+  <div class="al-prog"><div class="bar"><i id="albumBar"></i></div><div class="al-num" id="albumNum">0</div></div>
+  <div class="al-scroll" id="albumScroll"></div>
+</div>
+
+<div id="chooser" class="layer" hidden>
+  <div class="ch-title">选一台工程车</div>
+  <div class="ch-sub" id="chSub">每挖 10 次，就能换一种玩法</div>
+  <div class="ch-grid" id="chGrid"></div>
+</div>
+
+<div id="start" class="layer">
+  <div class="st-title">奥特曼<br>卡片</div>
+  <div class="st-sub">开着工程车，挖出奥特曼！</div>
+  <div class="st-art" id="startArt"></div>
+  <button class="bigbtn" id="startBtn">Start!</button>
+</div>
+
+<div id="flash"></div>
+<canvas id="fx"></canvas>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const O='#141B3D';
+let UID=0;
+const f1=n=>Math.round(n*10)/10;
+
+/* ---------- 数据（构建时注入） ---------- */
+const HEROES=[{"id": "orig", "kind": "hero", "r": 1, "name": "初代奥特曼", "tag": "1966《奥特曼》", "intro": "初代奥特曼来自M78星云光之国，是第一位来到地球守护大家的奥特曼。他和科学特搜队一起打怪兽，招牌必杀技是双手交叉放出的斯派修姆光线！"}, {"id": "seven", "kind": "hero", "r": 1, "name": "赛文奥特曼", "tag": "1967《奥特赛文》", "intro": "赛文奥特曼也来自M78星云，是宇宙警备队的一员。他头上的头镖能飞出去切开敌人，额头的光束灯能放出艾梅利姆光线。他的儿子就是赛罗奥特曼！"}, {"id": "jack", "kind": "hero", "r": 1, "name": "杰克奥特曼", "tag": "1971《归来的奥特曼》", "intro": "杰克奥特曼又叫归来的奥特曼。他手腕上戴着赛文送的奥特手镯，可以变成飞镖、长枪和盾牌，本领特别多，必杀技是斯派修姆光线！"}, {"id": "ace", "kind": "hero", "r": 1, "name": "艾斯奥特曼", "tag": "1972《奥特曼A》", "intro": "艾斯奥特曼是奥特兄弟的第五位，会的光线技特别多。他最有名的必杀技是梅塔利姆光线，还能用光做成锋利的光轮把怪兽切开！"}, {"id": "taro", "kind": "hero", "r": 2, "name": "泰罗奥特曼", "tag": "1973《奥特曼泰罗》", "intro": "泰罗奥特曼是奥特之父和奥特之母的儿子，头上有一对威风的奥特之角。他力气超大，必杀技是斯特利姆光线。后来他的儿子泰迦也成了奥特曼！"}, {"id": "leo", "kind": "hero", "r": 1, "name": "雷欧奥特曼", "tag": "1974《奥特曼雷欧》", "intro": "雷欧奥特曼来自狮子座L77星，故乡被毁后留在地球。他是功夫高手，最擅长雷欧飞踢。在赛文的严格训练下，他变得越来越强！"}, {"id": "astra", "kind": "hero", "r": 2, "name": "阿斯特拉", "tag": "1974《奥特曼雷欧》", "intro": "阿斯特拉是雷欧奥特曼的弟弟，也来自L77星。兄弟俩长得很像，常常一起并肩作战，配合得特别默契！"}, {"id": "zoffy", "kind": "hero", "r": 2, "name": "佐菲奥特曼", "tag": "奥特兄弟大哥", "intro": "佐菲奥特曼是奥特兄弟中的大哥，也是宇宙警备队的队长。他胸前和肩上有一颗颗星星勋章，代表他立过的许多功劳，必杀技是M87光线！"}, {"id": "father", "kind": "hero", "r": 3, "name": "奥特之父", "tag": "宇宙警备队大队长", "intro": "奥特之父是宇宙警备队的大队长，头上有一对又长又弯的奥特之角。他是泰罗的爸爸，守护光之国很多很多年，是大家最敬佩的长辈！"}, {"id": "mother", "kind": "hero", "r": 3, "name": "奥特之母", "tag": "银十字军队长", "intro": "奥特之母是光之国银十字军的队长，专门给受伤的奥特曼治疗。她温柔又强大，能用治愈的光让大家重新恢复力气。她是泰罗的妈妈！"}, {"id": "king", "kind": "hero", "r": 3, "name": "奥特之王", "tag": "传说中的奥特曼", "intro": "奥特之王是光之国最古老、最厉害的奥特曼，住在王者之星。他留着白胡子，披着红斗篷，什么危机都能化解。雷欧遇到大麻烦时，就是他来帮忙！"}, {"id": "joneus", "kind": "hero", "r": 2, "name": "乔尼亚斯", "tag": "1979《宇宙英雄奥特曼》", "intro": "乔尼亚斯出自动画片《宇宙英雄奥特曼》，来自U40星。他和科学警备队一起保护地球，必杀技是普拉尼乌姆光线！"}, {"id": "eighty", "kind": "hero", "r": 1, "name": "爱迪奥特曼", "tag": "1980《奥特曼80》", "intro": "爱迪奥特曼也叫奥特曼80，变身前是一位中学老师。他一边教学生，一边保护地球，必杀技是双手摆成L字放出的光线！"}, {"id": "yullian", "kind": "hero", "r": 2, "name": "尤莉安", "tag": "1980《奥特曼80》", "intro": "尤莉安是光之国的公主，也是一位女奥特曼。她来到地球帮助爱迪奥特曼，两个人一起战斗，是一对好搭档！"}, {"id": "great", "kind": "hero", "r": 1, "name": "葛雷奥特曼", "tag": "1990《葛雷奥特曼》", "intro": "葛雷奥特曼是在澳大利亚拍摄的奥特曼，红银相间的身体很结实。他和地球上的伙伴一起保护大自然，必杀技是威力很大的光线！"}, {"id": "powered", "kind": "hero", "r": 1, "name": "帕瓦特奥特曼", "tag": "1993《帕瓦特奥特曼》", "intro": "帕瓦特奥特曼是在美国拍摄的奥特曼，身材高大，造型简洁有力。他和防卫队W.I.N.R.一起保护地球，必杀技是威力加强的斯派修姆光线！"}, {"id": "tiga", "kind": "hero", "r": 2, "name": "迪迦奥特曼", "tag": "1996《迪迦奥特曼》", "intro": "迪迦奥特曼是三千万年前的光之巨人，在现代被大古唤醒。他能在复合型、强力型和空中型之间变换颜色，必杀技是哉佩利敖光线！"}, {"id": "dyna", "kind": "hero", "r": 2, "name": "戴拿奥特曼", "tag": "1997《戴拿奥特曼》", "intro": "戴拿奥特曼守护着人类飞向宇宙的新时代。他能变成力气大的强壮型和本领多的奇迹型，必杀技是索尔吉恩特光线！"}, {"id": "gaia", "kind": "hero", "r": 2, "name": "盖亚奥特曼", "tag": "1998《盖亚奥特曼》", "intro": "盖亚奥特曼是地球自己产生的光之巨人，代表大地的力量。他又聪明又有力气，最有名的必杀技是用头上的冠饰放出的光子边缘！"}, {"id": "agul", "kind": "hero", "r": 2, "name": "阿古茹奥特曼", "tag": "1998《盖亚奥特曼》", "intro": "阿古茹奥特曼是代表大海的光之巨人，身体是蓝色的。他一开始和盖亚意见不合，后来两人成为并肩作战的好伙伴！"}, {"id": "neos", "kind": "hero", "r": 1, "name": "奈欧斯奥特曼", "tag": "2000《奈欧斯奥特曼》", "intro": "奈欧斯奥特曼是新世纪的奥特曼，红色和银色的身体非常帅气。他和蓝色的战友赛文21一起，保护地球不受怪兽和宇宙人的伤害。"}, {"id": "seven21", "kind": "hero", "r": 1, "name": "赛文21", "tag": "2000《奈欧斯奥特曼》", "intro": "赛文21是一位蓝红相间的奥特战士，头上也有一把头镖。他和奈欧斯奥特曼是好战友，一起守护地球。"}, {"id": "cosmos", "kind": "hero", "r": 2, "name": "高斯奥特曼", "tag": "2001《高斯奥特曼》", "intro": "高斯奥特曼是一位非常温柔的奥特曼，不喜欢伤害怪兽。他常用蓝色月神型的光安抚怪兽，让它们回到大自然；需要战斗时会变成红色的日冕型！"}, {"id": "nexus", "kind": "hero", "r": 2, "name": "奈克瑟斯奥特曼", "tag": "2004《奈克瑟斯奥特曼》", "intro": "奈克瑟斯奥特曼是神秘的银色巨人，胸口有Y字形的能量核心。他的光会从一个勇敢的人传给下一个勇敢的人，大家一起把光传下去！"}, {"id": "noa", "kind": "hero", "r": 3, "name": "诺亚奥特曼", "tag": "传说中的银色巨人", "intro": "诺亚奥特曼是传说中的银色巨人，奈克瑟斯就是他力量的一部分。他背后有一对像翅膀一样的诺亚之翼，非常非常强大！"}, {"id": "max", "kind": "hero", "r": 1, "name": "麦克斯奥特曼", "tag": "2005《麦克斯奥特曼》", "intro": "麦克斯奥特曼号称最快最强，来自M78星云。他头上的冠饰可以取下来，像飞刀一样飞出去攻击，必杀技是麦克西姆加农！"}, {"id": "xenon", "kind": "hero", "r": 1, "name": "杰诺奥特曼", "tag": "2005《麦克斯奥特曼》", "intro": "杰诺奥特曼是麦克斯奥特曼的前辈和战友，常在宇宙里巡逻。关键时刻他会赶来帮忙，和麦克斯一起打败强敌！"}, {"id": "mebius", "kind": "hero", "r": 2, "name": "梦比优斯奥特曼", "tag": "2006《梦比优斯奥特曼》", "intro": "梦比优斯奥特曼是宇宙警备队最年轻的新人，变身前叫未来。他和CREW GUYS的伙伴们一起成长，必杀技是双手交叉成十字放出的光线！"}, {"id": "hikari", "kind": "hero", "r": 2, "name": "希卡利奥特曼", "tag": "2006《梦比优斯奥特曼》", "intro": "希卡利是光之国的科学家，有着蓝色的身体。他手上的骑士臂环能变出光剑，后来成为梦比优斯的好伙伴，一起战斗。"}, {"id": "sevenx", "kind": "hero", "r": 1, "name": "赛文X", "tag": "2007《奥特赛文X》", "intro": "赛文X是一位神秘的奥特战士，和赛文奥特曼长得有点像，头上也有一把头镖，可以飞出去攻击敌人。"}, {"id": "zero", "kind": "hero", "r": 3, "name": "赛罗奥特曼", "tag": "2009 剧场版初登场", "intro": "赛罗奥特曼是赛文奥特曼的儿子，雷欧是他的师父。他头上有两把头镖，还会变成很多形态。他最爱说：你还早两万年呢！"}, {"id": "ginga", "kind": "hero", "r": 1, "name": "银河奥特曼", "tag": "2013《银河奥特曼》", "intro": "银河奥特曼来自未来，身上有很多亮晶晶的水晶。水晶变成不同颜色，就能放出不同的必杀技，比如银河十字射击！"}, {"id": "victory", "kind": "hero", "r": 1, "name": "维克特利奥特曼", "tag": "2014《银河奥特曼S》", "intro": "维克特利奥特曼来自地底世界，守护着地下的人们。他的右手能变成怪兽的武器，和银河奥特曼是一对好搭档！"}, {"id": "x", "kind": "hero", "r": 1, "name": "艾克斯奥特曼", "tag": "2015《艾克斯奥特曼》", "intro": "艾克斯奥特曼和地球青年大地合体战斗，胸前有X字形的计时器。他能穿上用怪兽卡片变出的铠甲，必杀技是扎纳迪姆光线！"}, {"id": "orb", "kind": "hero", "r": 2, "name": "欧布奥特曼", "tag": "2016《欧布奥特曼》", "intro": "欧布奥特曼是一位流浪的战士，能借用两位前辈奥特曼的力量合成新形态，比如重光形态。必杀技是双手交叉放出的光线！"}, {"id": "geed", "kind": "hero", "r": 1, "name": "捷德奥特曼", "tag": "2017《捷德奥特曼》", "intro": "捷德奥特曼是贝利亚的儿子，眼睛看起来有点凶，但心地非常善良。他用奥特胶囊组合前辈的力量变身，一心想成为大家的英雄！"}, {"id": "rosso", "kind": "hero", "r": 1, "name": "罗索奥特曼", "tag": "2018《罗布奥特曼》", "intro": "罗索奥特曼是兄弟奥特曼里的哥哥，红色代表火焰。他和弟弟布鲁一起变身，兄弟合体还能变成更强的露布奥特曼！"}, {"id": "blu", "kind": "hero", "r": 1, "name": "布鲁奥特曼", "tag": "2018《罗布奥特曼》", "intro": "布鲁奥特曼是兄弟奥特曼里的弟弟，蓝色代表水。他和哥哥罗索默契十足，换上不同的水晶还能用风、土等不同的力量！"}, {"id": "grigio", "kind": "hero", "r": 2, "name": "格丽乔", "tag": "2018《罗布奥特曼》", "intro": "格丽乔是罗索和布鲁的妹妹变成的女奥特曼。她能用治愈的光帮助哥哥们，也会勇敢地保护大家。"}, {"id": "taiga", "kind": "hero", "r": 2, "name": "泰迦奥特曼", "tag": "2019《泰迦奥特曼》", "intro": "泰迦奥特曼是泰罗奥特曼的儿子，头上有一对小小的奥特之角。他和泰塔斯、风马组成三人小队，必杀技是从手臂放出的强力光线！"}, {"id": "titas", "kind": "hero", "r": 1, "name": "泰塔斯", "tag": "2019《泰迦奥特曼》", "intro": "泰塔斯来自U40星，是三人小队里的大力士，肌肉超级发达。他最喜欢锻炼身体，一拳就能把怪兽打飞！"}, {"id": "fuma", "kind": "hero", "r": 1, "name": "风马", "tag": "2019《泰迦奥特曼》", "intro": "风马来自O-50星，是像忍者一样的奥特战士，速度快得像风。他会扔出光之手里剑，是三人小队里跑得最快的！"}, {"id": "zeta", "kind": "hero", "r": 2, "name": "泽塔奥特曼", "tag": "2020《泽塔奥特曼》", "intro": "泽塔奥特曼是赛罗的徒弟，说话很有趣，总爱在句子前面加上Ultra。他能用前辈们的奖牌变成不同形态，必杀技是泽斯蒂姆光线！"}, {"id": "trigger", "kind": "hero", "r": 2, "name": "特利迦奥特曼", "tag": "2021《特利迦奥特曼》", "intro": "特利迦奥特曼是新时代的光之巨人，能在复合型、强力型和空中型之间变换。他的武器是圆环光刃，必杀技是哉佩利敖光线！"}, {"id": "decker", "kind": "hero", "r": 1, "name": "德凯奥特曼", "tag": "2022《德凯奥特曼》", "intro": "德凯奥特曼用奥特卡片变身，能变成闪亮型、强壮型和奇迹型。他和防卫队GUTS-SELECT的伙伴一起保护地球！"}, {"id": "blazar", "kind": "hero", "r": 2, "name": "布莱泽奥特曼", "tag": "2023《布莱泽奥特曼》", "intro": "布莱泽奥特曼很有野性，喜欢用大声的呐喊表达心情。他变身前是特殊怪兽应对小队SKaRD的队长，是一位勇敢可靠的爸爸！"}, {"id": "arc", "kind": "hero", "r": 2, "name": "阿克奥特曼", "tag": "2024《阿克奥特曼》", "intro": "阿克奥特曼的力量来自想象力。变身前的青年在怪兽调查机构工作，最爱动脑筋想办法。他相信只要敢想，就能战胜任何怪兽！"}, {"id": "omega", "kind": "hero", "r": 2, "name": "欧米伽奥特曼", "tag": "2025《欧米伽奥特曼》", "intro": "欧米伽奥特曼失去了记忆，从天上掉到了地球，和一位地球青年成为好朋友。他的武器是红色的欧米伽头镖，必杀技是双手交叉放出的光线！"}, {"id": "teo", "kind": "hero", "r": 2, "name": "提欧奥特曼", "tag": "2026《提欧奥特曼》", "intro": "提欧奥特曼是来自H12星的蓝色巨人，故乡被宇宙怪兽毁掉后来到地球，平时化身成学兽医的大学生。他在山里遇到了小怪兽普奇！"}];
+const VEHICLES=[{"id": "digger", "kind": "car", "r": 1, "name": "挖掘机", "tag": "挖挖挖，力气大", "say": "挖挖挖，力气大！大铲斗一下就能挖起好多土！", "v": "digger", "c": "#FFC21A", "bg": "ground"}, {"id": "dozer", "kind": "car", "r": 1, "name": "推土机", "tag": "推推推，推平路", "say": "推推推，大铲刀把路推得平平的！", "v": "dozer", "c": "#FFAA1F", "bg": "ground"}, {"id": "mixer", "kind": "car", "r": 1, "name": "水泥搅拌车", "tag": "转呀转，送水泥", "say": "大肚子转呀转，把水泥送到工地！", "v": "mixer", "c": "#F36B2B", "bg": "ground"}, {"id": "dump", "kind": "car", "r": 1, "name": "自卸卡车", "tag": "哗啦啦，倒沙土", "say": "车斗一抬，哗啦啦，沙土全倒出来！", "v": "dump", "c": "#2F8CE8", "bg": "ground"}, {"id": "roller", "kind": "car", "r": 1, "name": "压路机", "tag": "压一压，路平平", "say": "大滚轮压一压，路面平平又光光！", "v": "roller", "c": "#3BB26B", "bg": "ground"}, {"id": "crane", "kind": "car", "r": 2, "name": "大吊车", "tag": "吊起来，盖高楼", "say": "长长的吊臂，能把很重的东西吊上高楼！", "v": "crane", "c": "#FFC21A", "bg": "ground"}, {"id": "gold", "kind": "car", "r": 3, "name": "金色挖掘机", "tag": "闪闪发光超级厉害", "say": "金色挖掘机！闪闪发光，超级厉害！", "v": "digger", "c": "gold", "bg": "gold"}, {"id": "airliner", "kind": "air", "r": 1, "name": "大客机", "tag": "带大家飞去远方", "say": "大客机能坐好几百人，带大家飞到很远的地方！", "v": "airliner", "c": "#2F7FE0", "bg": "sky"}, {"id": "heli", "kind": "air", "r": 1, "name": "直升机", "tag": "螺旋桨转呀转", "say": "螺旋桨转呀转，直升机能直直地飞上天，还能停在空中！", "v": "heli", "c": "#E8452C", "bg": "sky"}, {"id": "transport", "kind": "air", "r": 2, "name": "大运输机", "tag": "大肚子装得多", "say": "大运输机的肚子特别大，坦克和卡车都能装进去！", "v": "transport", "c": "#8C99A8", "bg": "sky"}, {"id": "fighter", "kind": "army", "r": 2, "name": "战斗机", "tag": "飞得比声音还快", "say": "战斗机飞得比声音还快，守护祖国的天空！", "v": "fighter", "c": "#9AA6B6", "bg": "sky"}, {"id": "stealth", "kind": "army", "r": 3, "name": "隐身战斗机", "tag": "雷达很难发现它", "say": "隐身战斗机，雷达都很难发现它，超级厉害！", "v": "stealth", "c": "#5A6375", "bg": "gold"}, {"id": "aew", "kind": "army", "r": 2, "name": "预警机", "tag": "背着大雷达", "say": "预警机背上的大圆盘是雷达，能看到很远很远的地方！", "v": "aew", "c": "#B9C2CF", "bg": "sky"}, {"id": "tank", "kind": "army", "r": 1, "name": "坦克", "tag": "履带轰隆隆", "say": "履带轰隆隆，坦克穿着厚厚的盔甲，真威风！", "v": "tank", "c": "#6F7F4C", "bg": "ground"}, {"id": "apc", "kind": "army", "r": 1, "name": "装甲车", "tag": "八个大轮子", "say": "装甲车有八个大轮子，跑得又快又稳！", "v": "apc", "c": "#7C8A55", "bg": "ground"}, {"id": "rocket", "kind": "army", "r": 2, "name": "火箭炮车", "tag": "一排排火箭", "say": "火箭炮车背着一排排火箭，整整齐齐！", "v": "rocket", "c": "#6B7A4A", "bg": "ground"}, {"id": "carrier", "kind": "army", "r": 3, "name": "航空母舰", "tag": "海上的大机场", "say": "航空母舰是海上的大机场，战斗机能在上面起飞和降落！", "v": "carrier", "c": "#8E98A8", "bg": "sea"}];
+const AUDIO={"n_omega": "audio/n_omega.mp3", "i_nexus": "audio/i_nexus.mp3", "n_crane": "audio/n_crane.mp3", "i_grigio": "audio/i_grigio.mp3", "n_king": "audio/n_king.mp3", "i_agul": "audio/i_agul.mp3", "n_zero": "audio/n_zero.mp3", "i_neos": "audio/i_neos.mp3", "i_omega": "audio/i_omega.mp3", "n_noa": "audio/n_noa.mp3", "i_leo": "audio/i_leo.mp3", "n_zoffy": "audio/n_zoffy.mp3", "welcome": "audio/welcome.mp3", "i_noa": "audio/i_noa.mp3", "i_max": "audio/i_max.mp3", "i_zero": "audio/i_zero.mp3", "i_tank": "audio/i_tank.mp3", "c2": "audio/c2.mp3", "new": "audio/new.mp3", "choose": "audio/choose.mp3", "n_astra": "audio/n_astra.mp3", "c1": "audio/c1.mp3", "i_taiga": "audio/i_taiga.mp3", "n_dozer": "audio/n_dozer.mp3", "n_mixer": "audio/n_mixer.mp3", "miss": "audio/miss.mp3", "i_mebius": "audio/i_mebius.mp3", "i_sevenx": "audio/i_sevenx.mp3", "i_orig": "audio/i_orig.mp3", "i_taro": "audio/i_taro.mp3", "i_gaia": "audio/i_gaia.mp3", "soundon": "audio/soundon.mp3", "i_orb": "audio/i_orb.mp3", "i_zoffy": "audio/i_zoffy.mp3", "i_apc": "audio/i_apc.mp3", "i_gold": "audio/i_gold.mp3", "i_crane": "audio/i_crane.mp3", "i_decker": "audio/i_decker.mp3", "i_astra": "audio/i_astra.mp3", "i_heli": "audio/i_heli.mp3", "empty1": "audio/empty1.mp3", "n_orb": "audio/n_orb.mp3", "n_mother": "audio/n_mother.mp3", "n_gold": "audio/n_gold.mp3", "n_x": "audio/n_x.mp3", "n_ace": "audio/n_ace.mp3", "n_taro": "audio/n_taro.mp3", "i_seven": "audio/i_seven.mp3", "i_carrier": "audio/i_carrier.mp3", "i_father": "audio/i_father.mp3", "n_tiga": "audio/n_tiga.mp3", "n_yullian": "audio/n_yullian.mp3", "n_transport": "audio/n_transport.mp3", "m_digger": "audio/m_digger.mp3", "n_great": "audio/n_great.mp3", "n_fighter": "audio/n_fighter.mp3", "n_mebius": "audio/n_mebius.mp3", "i_powered": "audio/i_powered.mp3", "m_crane": "audio/m_crane.mp3", "i_ginga": "audio/i_ginga.mp3", "n_leo": "audio/n_leo.mp3", "n_seven": "audio/n_seven.mp3", "push": "audio/push.mp3", "n_decker": "audio/n_decker.mp3", "n_heli": "audio/n_heli.mp3", "n_digger": "audio/n_digger.mp3", "n_nexus": "audio/n_nexus.mp3", "n_arc": "audio/n_arc.mp3", "i_teo": "audio/i_teo.mp3", "i_blu": "audio/i_blu.mp3", "i_trigger": "audio/i_trigger.mp3", "c3": "audio/c3.mp3", "i_rosso": "audio/i_rosso.mp3", "n_joneus": "audio/n_joneus.mp3", "n_ginga": "audio/n_ginga.mp3", "n_father": "audio/n_father.mp3", "done": "audio/done.mp3", "i_x": "audio/i_x.mp3", "i_stealth": "audio/i_stealth.mp3", "n_taiga": "audio/n_taiga.mp3", "orb": "audio/orb.mp3", "n_max": "audio/n_max.mp3", "n_stealth": "audio/n_stealth.mp3", "locked": "audio/locked.mp3", "i_cosmos": "audio/i_cosmos.mp3", "i_king": "audio/i_king.mp3", "n_apc": "audio/n_apc.mp3", "n_victory": "audio/n_victory.mp3", "n_dump": "audio/n_dump.mp3", "i_blazar": "audio/i_blazar.mp3", "i_eighty": "audio/i_eighty.mp3", "n_geed": "audio/n_geed.mp3", "i_mother": "audio/i_mother.mp3", "n_hikari": "audio/n_hikari.mp3", "i_transport": "audio/i_transport.mp3", "i_fuma": "audio/i_fuma.mp3", "n_agul": "audio/n_agul.mp3", "n_eighty": "audio/n_eighty.mp3", "i_joneus": "audio/i_joneus.mp3", "n_gaia": "audio/n_gaia.mp3", "i_jack": "audio/i_jack.mp3", "empty2": "audio/empty2.mp3", "album": "audio/album.mp3", "i_ace": "audio/i_ace.mp3", "i_yullian": "audio/i_yullian.mp3", "i_aew": "audio/i_aew.mp3", "n_carrier": "audio/n_carrier.mp3", "i_dozer": "audio/i_dozer.mp3", "i_tiga": "audio/i_tiga.mp3", "c5": "audio/c5.mp3", "n_neos": "audio/n_neos.mp3", "hello": "audio/hello.mp3", "i_digger": "audio/i_digger.mp3", "n_blazar": "audio/n_blazar.mp3", "i_fighter": "audio/i_fighter.mp3", "n_jack": "audio/n_jack.mp3", "n_tank": "audio/n_tank.mp3", "i_dump": "audio/i_dump.mp3", "n_zeta": "audio/n_zeta.mp3", "super": "audio/super.mp3", "n_airliner": "audio/n_airliner.mp3", "i_zeta": "audio/i_zeta.mp3", "i_titas": "audio/i_titas.mp3", "n_cosmos": "audio/n_cosmos.mp3", "again": "audio/again.mp3", "i_mixer": "audio/i_mixer.mp3", "n_sevenx": "audio/n_sevenx.mp3", "n_rosso": "audio/n_rosso.mp3", "n_grigio": "audio/n_grigio.mp3", "n_teo": "audio/n_teo.mp3", "n_trigger": "audio/n_trigger.mp3", "n_aew": "audio/n_aew.mp3", "i_great": "audio/i_great.mp3", "i_geed": "audio/i_geed.mp3", "n_rocket": "audio/n_rocket.mp3", "m_dozer": "audio/m_dozer.mp3", "n_blu": "audio/n_blu.mp3", "n_powered": "audio/n_powered.mp3", "n_seven21": "audio/n_seven21.mp3", "n_dyna": "audio/n_dyna.mp3", "n_xenon": "audio/n_xenon.mp3", "i_victory": "audio/i_victory.mp3", "i_seven21": "audio/i_seven21.mp3", "m_mixer": "audio/m_mixer.mp3", "orbGold": "audio/orbGold.mp3", "i_airliner": "audio/i_airliner.mp3", "n_fuma": "audio/n_fuma.mp3", "i_xenon": "audio/i_xenon.mp3", "i_roller": "audio/i_roller.mp3", "c4": "audio/c4.mp3", "i_dyna": "audio/i_dyna.mp3", "i_hikari": "audio/i_hikari.mp3", "n_roller": "audio/n_roller.mp3", "n_titas": "audio/n_titas.mp3", "i_arc": "audio/i_arc.mp3", "i_rocket": "audio/i_rocket.mp3", "grab": "audio/grab.mp3", "n_orig": "audio/n_orig.mp3"};
+const TEXT={"hello": "小队员你好！我们开着工程车，去挖奥特曼卡片吧！点黄色的大按钮开始！", "welcome": "欢迎回来，小队员！继续挖宝吧！", "c1": "一！", "c2": "二！", "c3": "三！", "c4": "四！", "c5": "五！", "orb": "挖到光球啦！快点一点！", "orbGold": "哇！是金色的光球！快点一点！", "empty1": "哎呀，什么都没挖到！没关系，再来一次！", "empty2": "咦？只挖到一块小石头。别灰心，再试一次！", "new": "新卡片！", "super": "超级稀有！", "again": "又见面啦！", "album": "这是你的卡册！点一点卡片，听听它的故事。", "locked": "这张还没挖到，快去挖吧！", "done": "太棒了！所有卡片都集齐啦！你是奥特曼防卫队的大队长！", "soundon": "声音打开啦！", "choose": "你已经挖了十次啦！选一台工程车，换个玩法吧！", "m_digger": "挖掘机！点三下，挖挖挖！", "m_dozer": "推土机！按住按钮不放，推推推！", "m_crane": "大吊车！看准了再按，抓光球！", "m_mixer": "搅拌车！点五下，转转转！", "push": "推推推！", "miss": "差一点点！再试一次！", "grab": "抓到啦！", "n_orig": "初代奥特曼！", "i_orig": "初代奥特曼来自M78星云光之国，是第一位来到地球守护大家的奥特曼。他和科学特搜队一起打怪兽，招牌必杀技是双手交叉放出的斯派修姆光线！", "n_seven": "赛文奥特曼！", "i_seven": "赛文奥特曼也来自M78星云，是宇宙警备队的一员。他头上的头镖能飞出去切开敌人，额头的光束灯能放出艾梅利姆光线。他的儿子就是赛罗奥特曼！", "n_jack": "杰克奥特曼！", "i_jack": "杰克奥特曼又叫归来的奥特曼。他手腕上戴着赛文送的奥特手镯，可以变成飞镖、长枪和盾牌，本领特别多，必杀技是斯派修姆光线！", "n_ace": "艾斯奥特曼！", "i_ace": "艾斯奥特曼是奥特兄弟的第五位，会的光线技特别多。他最有名的必杀技是梅塔利姆光线，还能用光做成锋利的光轮把怪兽切开！", "n_taro": "泰罗奥特曼！", "i_taro": "泰罗奥特曼是奥特之父和奥特之母的儿子，头上有一对威风的奥特之角。他力气超大，必杀技是斯特利姆光线。后来他的儿子泰迦也成了奥特曼！", "n_leo": "雷欧奥特曼！", "i_leo": "雷欧奥特曼来自狮子座L77星，故乡被毁后留在地球。他是功夫高手，最擅长雷欧飞踢。在赛文的严格训练下，他变得越来越强！", "n_astra": "阿斯特拉！", "i_astra": "阿斯特拉是雷欧奥特曼的弟弟，也来自L77星。兄弟俩长得很像，常常一起并肩作战，配合得特别默契！", "n_zoffy": "佐菲奥特曼！", "i_zoffy": "佐菲奥特曼是奥特兄弟中的大哥，也是宇宙警备队的队长。他胸前和肩上有一颗颗星星勋章，代表他立过的许多功劳，必杀技是M87光线！", "n_father": "奥特之父！", "i_father": "奥特之父是宇宙警备队的大队长，头上有一对又长又弯的奥特之角。他是泰罗的爸爸，守护光之国很多很多年，是大家最敬佩的长辈！", "n_mother": "奥特之母！", "i_mother": "奥特之母是光之国银十字军的队长，专门给受伤的奥特曼治疗。她温柔又强大，能用治愈的光让大家重新恢复力气。她是泰罗的妈妈！", "n_king": "奥特之王！", "i_king": "奥特之王是光之国最古老、最厉害的奥特曼，住在王者之星。他留着白胡子，披着红斗篷，什么危机都能化解。雷欧遇到大麻烦时，就是他来帮忙！", "n_joneus": "乔尼亚斯！", "i_joneus": "乔尼亚斯出自动画片《宇宙英雄奥特曼》，来自U40星。他和科学警备队一起保护地球，必杀技是普拉尼乌姆光线！", "n_eighty": "爱迪奥特曼！", "i_eighty": "爱迪奥特曼也叫奥特曼80，变身前是一位中学老师。他一边教学生，一边保护地球，必杀技是双手摆成L字放出的光线！", "n_yullian": "尤莉安！", "i_yullian": "尤莉安是光之国的公主，也是一位女奥特曼。她来到地球帮助爱迪奥特曼，两个人一起战斗，是一对好搭档！", "n_great": "葛雷奥特曼！", "i_great": "葛雷奥特曼是在澳大利亚拍摄的奥特曼，红银相间的身体很结实。他和地球上的伙伴一起保护大自然，必杀技是威力很大的光线！", "n_powered": "帕瓦特奥特曼！", "i_powered": "帕瓦特奥特曼是在美国拍摄的奥特曼，身材高大，造型简洁有力。他和防卫队W.I.N.R.一起保护地球，必杀技是威力加强的斯派修姆光线！", "n_tiga": "迪迦奥特曼！", "i_tiga": "迪迦奥特曼是三千万年前的光之巨人，在现代被大古唤醒。他能在复合型、强力型和空中型之间变换颜色，必杀技是哉佩利敖光线！", "n_dyna": "戴拿奥特曼！", "i_dyna": "戴拿奥特曼守护着人类飞向宇宙的新时代。他能变成力气大的强壮型和本领多的奇迹型，必杀技是索尔吉恩特光线！", "n_gaia": "盖亚奥特曼！", "i_gaia": "盖亚奥特曼是地球自己产生的光之巨人，代表大地的力量。他又聪明又有力气，最有名的必杀技是用头上的冠饰放出的光子边缘！", "n_agul": "阿古茹奥特曼！", "i_agul": "阿古茹奥特曼是代表大海的光之巨人，身体是蓝色的。他一开始和盖亚意见不合，后来两人成为并肩作战的好伙伴！", "n_neos": "奈欧斯奥特曼！", "i_neos": "奈欧斯奥特曼是新世纪的奥特曼，红色和银色的身体非常帅气。他和蓝色的战友赛文21一起，保护地球不受怪兽和宇宙人的伤害。", "n_seven21": "赛文21！", "i_seven21": "赛文21是一位蓝红相间的奥特战士，头上也有一把头镖。他和奈欧斯奥特曼是好战友，一起守护地球。", "n_cosmos": "高斯奥特曼！", "i_cosmos": "高斯奥特曼是一位非常温柔的奥特曼，不喜欢伤害怪兽。他常用蓝色月神型的光安抚怪兽，让它们回到大自然；需要战斗时会变成红色的日冕型！", "n_nexus": "奈克瑟斯奥特曼！", "i_nexus": "奈克瑟斯奥特曼是神秘的银色巨人，胸口有Y字形的能量核心。他的光会从一个勇敢的人传给下一个勇敢的人，大家一起把光传下去！", "n_noa": "诺亚奥特曼！", "i_noa": "诺亚奥特曼是传说中的银色巨人，奈克瑟斯就是他力量的一部分。他背后有一对像翅膀一样的诺亚之翼，非常非常强大！", "n_max": "麦克斯奥特曼！", "i_max": "麦克斯奥特曼号称最快最强，来自M78星云。他头上的冠饰可以取下来，像飞刀一样飞出去攻击，必杀技是麦克西姆加农！", "n_xenon": "杰诺奥特曼！", "i_xenon": "杰诺奥特曼是麦克斯奥特曼的前辈和战友，常在宇宙里巡逻。关键时刻他会赶来帮忙，和麦克斯一起打败强敌！", "n_mebius": "梦比优斯奥特曼！", "i_mebius": "梦比优斯奥特曼是宇宙警备队最年轻的新人，变身前叫未来。他和CREW GUYS的伙伴们一起成长，必杀技是双手交叉成十字放出的光线！", "n_hikari": "希卡利奥特曼！", "i_hikari": "希卡利是光之国的科学家，有着蓝色的身体。他手上的骑士臂环能变出光剑，后来成为梦比优斯的好伙伴，一起战斗。", "n_sevenx": "赛文X！", "i_sevenx": "赛文X是一位神秘的奥特战士，和赛文奥特曼长得有点像，头上也有一把头镖，可以飞出去攻击敌人。", "n_zero": "赛罗奥特曼！", "i_zero": "赛罗奥特曼是赛文奥特曼的儿子，雷欧是他的师父。他头上有两把头镖，还会变成很多形态。他最爱说：你还早两万年呢！", "n_ginga": "银河奥特曼！", "i_ginga": "银河奥特曼来自未来，身上有很多亮晶晶的水晶。水晶变成不同颜色，就能放出不同的必杀技，比如银河十字射击！", "n_victory": "维克特利奥特曼！", "i_victory": "维克特利奥特曼来自地底世界，守护着地下的人们。他的右手能变成怪兽的武器，和银河奥特曼是一对好搭档！", "n_x": "艾克斯奥特曼！", "i_x": "艾克斯奥特曼和地球青年大地合体战斗，胸前有X字形的计时器。他能穿上用怪兽卡片变出的铠甲，必杀技是扎纳迪姆光线！", "n_orb": "欧布奥特曼！", "i_orb": "欧布奥特曼是一位流浪的战士，能借用两位前辈奥特曼的力量合成新形态，比如重光形态。必杀技是双手交叉放出的光线！", "n_geed": "捷德奥特曼！", "i_geed": "捷德奥特曼是贝利亚的儿子，眼睛看起来有点凶，但心地非常善良。他用奥特胶囊组合前辈的力量变身，一心想成为大家的英雄！", "n_rosso": "罗索奥特曼！", "i_rosso": "罗索奥特曼是兄弟奥特曼里的哥哥，红色代表火焰。他和弟弟布鲁一起变身，兄弟合体还能变成更强的露布奥特曼！", "n_blu": "布鲁奥特曼！", "i_blu": "布鲁奥特曼是兄弟奥特曼里的弟弟，蓝色代表水。他和哥哥罗索默契十足，换上不同的水晶还能用风、土等不同的力量！", "n_grigio": "格丽乔！", "i_grigio": "格丽乔是罗索和布鲁的妹妹变成的女奥特曼。她能用治愈的光帮助哥哥们，也会勇敢地保护大家。", "n_taiga": "泰迦奥特曼！", "i_taiga": "泰迦奥特曼是泰罗奥特曼的儿子，头上有一对小小的奥特之角。他和泰塔斯、风马组成三人小队，必杀技是从手臂放出的强力光线！", "n_titas": "泰塔斯！", "i_titas": "泰塔斯来自U40星，是三人小队里的大力士，肌肉超级发达。他最喜欢锻炼身体，一拳就能把怪兽打飞！", "n_fuma": "风马！", "i_fuma": "风马来自O-50星，是像忍者一样的奥特战士，速度快得像风。他会扔出光之手里剑，是三人小队里跑得最快的！", "n_zeta": "泽塔奥特曼！", "i_zeta": "泽塔奥特曼是赛罗的徒弟，说话很有趣，总爱在句子前面加上Ultra。他能用前辈们的奖牌变成不同形态，必杀技是泽斯蒂姆光线！", "n_trigger": "特利迦奥特曼！", "i_trigger": "特利迦奥特曼是新时代的光之巨人，能在复合型、强力型和空中型之间变换。他的武器是圆环光刃，必杀技是哉佩利敖光线！", "n_decker": "德凯奥特曼！", "i_decker": "德凯奥特曼用奥特卡片变身，能变成闪亮型、强壮型和奇迹型。他和防卫队GUTS-SELECT的伙伴一起保护地球！", "n_blazar": "布莱泽奥特曼！", "i_blazar": "布莱泽奥特曼很有野性，喜欢用大声的呐喊表达心情。他变身前是特殊怪兽应对小队SKaRD的队长，是一位勇敢可靠的爸爸！", "n_arc": "阿克奥特曼！", "i_arc": "阿克奥特曼的力量来自想象力。变身前的青年在怪兽调查机构工作，最爱动脑筋想办法。他相信只要敢想，就能战胜任何怪兽！", "n_omega": "欧米伽奥特曼！", "i_omega": "欧米伽奥特曼失去了记忆，从天上掉到了地球，和一位地球青年成为好朋友。他的武器是红色的欧米伽头镖，必杀技是双手交叉放出的光线！", "n_teo": "提欧奥特曼！", "i_teo": "提欧奥特曼是来自H12星的蓝色巨人，故乡被宇宙怪兽毁掉后来到地球，平时化身成学兽医的大学生。他在山里遇到了小怪兽普奇！", "n_digger": "挖掘机！", "i_digger": "挖挖挖，力气大！大铲斗一下就能挖起好多土！", "n_dozer": "推土机！", "i_dozer": "推推推，大铲刀把路推得平平的！", "n_mixer": "水泥搅拌车！", "i_mixer": "大肚子转呀转，把水泥送到工地！", "n_dump": "自卸卡车！", "i_dump": "车斗一抬，哗啦啦，沙土全倒出来！", "n_roller": "压路机！", "i_roller": "大滚轮压一压，路面平平又光光！", "n_crane": "大吊车！", "i_crane": "长长的吊臂，能把很重的东西吊上高楼！", "n_gold": "金色挖掘机！", "i_gold": "金色挖掘机！闪闪发光，超级厉害！", "n_airliner": "大客机！", "i_airliner": "大客机能坐好几百人，带大家飞到很远的地方！", "n_heli": "直升机！", "i_heli": "螺旋桨转呀转，直升机能直直地飞上天，还能停在空中！", "n_transport": "大运输机！", "i_transport": "大运输机的肚子特别大，坦克和卡车都能装进去！", "n_fighter": "战斗机！", "i_fighter": "战斗机飞得比声音还快，守护祖国的天空！", "n_stealth": "隐身战斗机！", "i_stealth": "隐身战斗机，雷达都很难发现它，超级厉害！", "n_aew": "预警机！", "i_aew": "预警机背上的大圆盘是雷达，能看到很远很远的地方！", "n_tank": "坦克！", "i_tank": "履带轰隆隆，坦克穿着厚厚的盔甲，真威风！", "n_apc": "装甲车！", "i_apc": "装甲车有八个大轮子，跑得又快又稳！", "n_rocket": "火箭炮车！", "i_rocket": "火箭炮车背着一排排火箭，整整齐齐！", "n_carrier": "航空母舰！", "i_carrier": "航空母舰是海上的大机场，战斗机能在上面起飞和降落！"};
+
+/* ---------- 奥特曼外观配置 ---------- */
+const C={R:'#D21F2B',DR:'#A3121C',B:'#2456C8',BL:'#3E9BE8',P:'#6A39B4',K:'#2B2F3B',G:'#E1B23F',S:'#D8DDE6',O:'#EC7A2F',GR:'#8B93A5',T:'#1FA7A0'};
+const classic=a=>[['sides',a],['legOut',a],['upper',a]];
+const BEAM=new Set(['orig','jack','zoffy','mebius','omega','orb','neos','max','ginga','geed','taiga','trigger','decker','teo','powered','great','x','zeta','arc','eighty']);
+const HV={
+  orig:{base:'S',pat:classic('R'),crest:'fin',timer:'round'},
+  seven:{base:'R',pat:[['center','DR']],prot:'S',protDots:1,crest:'slugger',timer:'none',lamp:'#5EE08F'},
+  jack:{base:'S',pat:[...classic('R'),['belly','R'],['legIn','S']],crest:'fin',timer:'round',brace:'#D9DEE7'},
+  ace:{base:'S',pat:[['sides','R'],['legs','R'],['legIn','S'],['upper','R'],['belly','R']],crest:'ace',timer:'round'},
+  taro:{base:'R',pat:[['center','S'],['legIn','S']],prot:'S',crest:'horns',timer:'round'},
+  leo:{base:'R',pat:[['chest','S'],['stripeC','S'],['legIn','S']],crest:'leo',timer:'round'},
+  astra:{base:'R',pat:[['chest','S'],['legIn','S']],crest:'leo',timer:'round'},
+  zoffy:{base:'S',pat:classic('R'),crest:'fin',timer:'round',stars:1},
+  father:{base:'S',pat:[...classic('R'),['belly','R']],prot:'S',crest:'bighorns',mustache:1,cape:'#C61E28',timer:'round'},
+  mother:{base:'S',pat:[...classic('R')],crest:'hair',timer:'round'},
+  king:{base:'S',pat:[['sides','R'],['legOut','R']],prot:'G',crest:'crown',beard:1,cape:'#C61E28',timer:'round'},
+  joneus:{base:'S',pat:[...classic('R'),['belly','R']],crest:'fin',timer:'round'},
+  eighty:{base:'S',pat:[...classic('R'),['stripeC','R']],crest:'fin',timer:'round'},
+  yullian:{base:'S',pat:classic('R'),crest:'tiara',tiara:'#E1B23F',timer:'round'},
+  great:{base:'S',pat:classic('R'),headA:'R',crest:'fin',timer:'round'},
+  powered:{base:'S',pat:[['sides','R'],['legOut','R']],crest:'fin',timer:'round',eye:'s'},
+  tiga:{base:'S',pat:[['sides','P'],['belly','R'],['legOut','P'],['legIn','R'],['upper','R'],['fore','P']],prot:'G',crest:'tiga',tc:'P',timer:'round',gem:'#7FE3FF'},
+  dyna:{base:'S',pat:[['sides','B'],['belly','R'],['legOut','R'],['legIn','B'],['upper','R']],prot:'G',crest:'tiga',tc:'B',timer:'round',gem:'#7FE3FF'},
+  gaia:{base:'S',pat:[...classic('R'),['belly','K']],prot:'K',crest:'gaia',timer:'gaia'},
+  agul:{base:'S',pat:[...classic('B'),['belly','K']],prot:'K',crest:'agul',timer:'gaia'},
+  neos:{base:'S',pat:classic('R'),crest:'fin',timer:'round'},
+  seven21:{base:'B',pat:[['center','S'],['legIn','R']],prot:'S',protDots:1,crest:'slugger',timer:'round'},
+  cosmos:{base:'S',pat:classic('BL'),crest:'cosmos',timer:'round'},
+  nexus:{base:'S',pat:[...classic('R'),['belly','GR']],crest:'nexus',timer:'y'},
+  noa:{base:'S',pat:[['sides','GR'],['legOut','GR'],['upper','GR']],crest:'nexus',timer:'y',wings:1},
+  max:{base:'S',pat:[['sides','R'],['legs','R'],['legIn','S'],['upper','R']],prot:'G',crest:'blade',timer:'round'},
+  xenon:{base:'S',pat:[['sides','K'],['legOut','K'],['upper','R']],prot:'S',crest:'blade',timer:'round'},
+  mebius:{base:'S',pat:[...classic('R'),['belly','R']],crest:'fin',timer:'round',brace:'#E1B23F'},
+  hikari:{base:'B',pat:[['center','S'],['legIn','S']],crest:'fin',timer:'round',brace:'#D9DEE7'},
+  sevenx:{base:'DR',pat:[['center','R']],prot:'S',protDots:1,crest:'slugger',timer:'none',lamp:'#5EE08F'},
+  zero:{base:'B',pat:[['belly','R'],['legIn','R'],['fore','R']],prot:'S',protDots:1,headA:'B',crest:'double',db:'R',eye:'s',timer:'round'},
+  ginga:{base:'S',pat:classic('R'),crest:'fin',timer:'crystal',crystals:'#4FC3FF'},
+  victory:{base:'K',pat:[['sides','R'],['legOut','R'],['upper','R']],crest:'v',timer:'crystal',crystals:'#FF9A2E',vcrystal:1},
+  x:{base:'S',pat:[...classic('R'),['belly','K']],crest:'fin',timer:'x'},
+  orb:{base:'S',pat:[...classic('R'),['belly','K']],crest:'fin',timer:'ring',headA:'K'},
+  geed:{base:'K',pat:[['sides','R'],['legOut','R'],['upper','R']],crest:'fin',eye:'s',eyeC:'b',timer:'round'},
+  rosso:{base:'R',pat:[['center','S'],['legIn','S']],crest:'twinhorns',hc:'R',timer:'round'},
+  blu:{base:'B',pat:[['center','S'],['legIn','S']],crest:'unihorn',hc:'B',timer:'round'},
+  grigio:{base:'S',pat:classic('O'),crest:'tiara',tiara:'#EC7A2F',timer:'round'},
+  taiga:{base:'S',pat:[...classic('R'),['belly','B']],prot:'S',crest:'smallhorns',timer:'round'},
+  titas:{base:'R',pat:[['chest','G'],['legIn','S']],crest:'fin',timer:'round',gem:'#FFD447',bulk:1},
+  fuma:{base:'B',pat:[['center','S'],['legIn','S']],crest:'fin',eye:'s',timer:'round'},
+  zeta:{base:'B',pat:[['belly','R'],['legIn','R'],['upper','R']],prot:'S',crest:'zeta',eye:'s',timer:'round'},
+  trigger:{base:'S',pat:[['sides','P'],['belly','R'],['legOut','P'],['legIn','R'],['upper','R'],['fore','P']],prot:'S',crest:'trigger',tc:'P',timer:'round'},
+  decker:{base:'S',pat:[['sides','R'],['belly','B'],['legOut','R'],['legIn','B'],['upper','R']],prot:'S',crest:'decker',timer:'round'},
+  blazar:{base:'S',pat:[['halfL','B'],['legOut','R'],['upper','R']],crest:'blazar',eye:'s',timer:'round'},
+  arc:{base:'S',pat:[...classic('R'),['belly','K']],crest:'arc',timer:'round'},
+  omega:{base:'S',pat:classic('R'),crest:'slugger',sc:'R',timer:'round'},
+  teo:{base:'S',pat:[...classic('B'),['belly','B']],crest:'fin',timer:'round',eyeC:'b'}
+};
+
+/* ---------- 写实一点的奥特曼 ---------- */
+function hx(c){return C[c]||c}
+function mix(hex,amt){
+  const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const t=amt<0?0:255,p=Math.abs(amt);
+  r=Math.round(r+(t-r)*p);g=Math.round(g+(t-g)*p);b=Math.round(b+(t-b)*p);
+  return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
+}
+function metal(id,c,x1,x2,shine){
+  const hi=shine?mix(c,.55):mix(c,.3);
+  return `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" y1="0" x2="${x2}" y2="0">`+
+    `<stop offset="0" stop-color="${mix(c,-.5)}"/><stop offset=".2" stop-color="${mix(c,-.12)}"/><stop offset=".4" stop-color="${hi}"/>`+
+    `<stop offset=".52" stop-color="${c}"/><stop offset=".78" stop-color="${mix(c,-.2)}"/><stop offset="1" stop-color="${mix(c,-.55)}"/></linearGradient>`;
+}
+function cap(x1,y1,x2,y2,r1,r2){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),nx=-dy/L,ny=dx/L;
+  const p=(x,y)=>f1(x)+' '+f1(y);
+  return `M${p(x1+nx*r1,y1+ny*r1)} L${p(x2+nx*r2,y2+ny*r2)} A${r2} ${r2} 0 0 0 ${p(x2-nx*r2,y2-ny*r2)} L${p(x1-nx*r1,y1-ny*r1)} A${r1} ${r1} 0 0 0 ${p(x1+nx*r1,y1+ny*r1)} Z`;
+}
+const mirror=d=>d.replace(/(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g,(m,x,y)=>f1(200-parseFloat(x))+' '+y);
+function both(d){return d+' '+mirror(d)}
+
+function heroSVG(id){
+  const h=HV[id]||HV.orig, u='h'+(++UID);
+  const bulk=h.bulk?4:0;
+  const base=hx(h.base);
+  // 身体几何
+  const torso=`M${62-bulk} 80 C78 72 122 72 ${138+bulk} 80 C${148+bulk} 86 ${149+bulk} 100 ${143+bulk} 112 L133 142 C129 154 126 162 124 170 L76 170 C74 162 71 154 67 142 L${57-bulk} 112 C${51-bulk} 100 ${52-bulk} 86 ${62-bulk} 80 Z`;
+  const pelvis='M75 166 L125 166 C129 178 127 188 120 195 L100 201 L80 195 C73 188 71 178 75 166 Z';
+  const legL='M80 186 L100 197 C99 220 94 238 92 254 L66 254 C67 238 71 212 80 186 Z';
+  const legR=mirror(legL);
+  const beam=BEAM.has(id);
+  const upL=beam?cap(60,88,58,132,10+bulk/2,8):cap(60,88,36,106,10+bulk/2,8), foreL=beam?cap(60,134,64,92,8,6.8):cap(36,106,32,74,8,6.8);
+  const upR=beam?cap(140,88,150,122,10+bulk/2,8):cap(140,88,156,124,10+bulk/2,8), foreR=beam?cap(150,122,76,116,8,6.8):cap(156,124,153,156,8,6.8);
+  const bodyParts=beam?[torso,pelvis,legL,legR,upL,upR,foreL,foreR]:[torso,pelvis,legL,legR,upL,foreL,upR,foreR];
+  const PIECES={
+    all:'M-20 -20 H220 V280 H-20 Z',
+    sides:both('M50 80 C66 88 78 112 86 150 L91 172 L60 172 L42 110 Z'),
+    center:'M84 90 C92 98 108 98 116 90 L114 132 L100 170 L86 132 Z',
+    chest:'M50 74 H150 L144 114 C124 122 76 122 56 114 Z',
+    belly:'M78 124 C90 131 110 131 122 124 L121 172 C114 184 106 194 100 200 C94 194 86 184 79 172 Z',
+    legOut:both('M58 180 L86 186 C82 212 78 234 76 262 L48 262 Z'),
+    legIn:both('M86 188 L100 197 L100 262 L77 262 C79 234 83 212 86 188 Z'),
+    legs:'M40 180 H160 V262 H40 Z',
+    stripeC:'M96.5 70 H103.5 V262 H96.5 Z',
+    halfL:'M-20 -20 H100 V280 H-20 Z',
+    upper:upL+' '+upR, fore:foreL+' '+foreR
+  };
+  const eyeCols=h.eyeC==='b'?['#F2FCFF','#A6E8FF','#2F9BE0']:['#FFFFF4','#FFF1A0','#E5B52C'];
+  let defs=metal(u+'base',base,24,176,h.base==='S')+metal(u+'sil','#D8DDE6',78,122,1)+metal(u+'silb','#D8DDE6',24,176,1)+
+    `<clipPath id="${u}c"><path d="${bodyParts.join(' ')}"/></clipPath>`+
+    `<radialGradient id="${u}eye" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="${eyeCols[0]}"/><stop offset=".55" stop-color="${eyeCols[1]}"/><stop offset="1" stop-color="${eyeCols[2]}"/></radialGradient>`+
+    `<radialGradient id="${u}tm" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#F0FEFF"/><stop offset=".45" stop-color="#63DEFF"/><stop offset="1" stop-color="#0F7FC6"/></radialGradient>`+
+    `<radialGradient id="${u}hl" cx=".38" cy=".32" r=".55"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".5"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>`+
+    `<linearGradient id="${u}sh" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>`+
+    `<radialGradient id="${u}aura" cx=".5" cy=".45" r=".5"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".45"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>`;
+  const usedCols={};
+  const fillOf=c=>{const k=hx(c);if(!usedCols[k]){usedCols[k]=u+'k'+Object.keys(usedCols).length;defs+=metal(usedCols[k],k,24,176,c==='S');}return `url(#${usedCols[k]})`;};
+  const ln=`stroke="${O}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"`;
+  let s='';
+  s+=`<ellipse cx="100" cy="128" rx="96" ry="128" fill="url(#${u}aura)"/>`;
+  if(h.wings){
+    const w='M66 100 C36 66 10 80 2 124 C18 110 34 108 50 116 C28 128 20 150 18 172 C34 154 50 146 68 142 Z';
+    s+=`<path d="${both(w)}" fill="url(#${u}silb)" ${ln}/><path d="${both('M60 106 C40 88 24 92 14 112 M58 128 C42 128 32 140 26 154')}" fill="none" stroke="${C.R}" stroke-width="3"/>`;
+  }
+  if(h.cape){ s+=`<path d="M58 84 C36 140 30 200 26 256 L174 256 C170 200 164 140 142 84 Z" fill="${h.cape}" ${ln}/><path d="M58 84 C36 140 30 200 26 256 L60 256 C62 200 66 140 74 92 Z" fill="#000" opacity=".18"/>`; }
+  // 身体底色
+  bodyParts.forEach(d=>s+=`<path d="${d}" fill="url(#${u}base)"/>`);
+  // 花纹（裁在身体里）
+  s+=`<g clip-path="url(#${u}c)">`;
+  (h.pat||[]).forEach(([p,c])=>{ s+=`<path d="${PIECES[p]}" fill="${fillOf(c)}"/>`; });
+  // 肌肉线条和光影
+  s+=`<path d="M74 104 C84 114 94 114 99 107 M126 104 C116 114 106 114 101 107 M100 112 V160 M91 126 H109 M90 139 H110 M91 152 H109 M70 140 C76 150 80 160 82 168 M130 140 C124 150 120 160 118 168 M84 214 C86 224 86 232 84 240 M116 214 C114 224 114 232 116 240" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.6" stroke-linecap="round"/>`;
+  s+=`<rect x="20" y="70" width="160" height="200" fill="url(#${u}sh)"/><ellipse cx="88" cy="104" rx="60" ry="70" fill="url(#${u}hl)"/>`;
+  s+=`</g>`;
+  bodyParts.forEach(d=>s+=`<path d="${d}" fill="none" ${ln}/>`);
+  // 拳头
+  const fist=(x,y)=>`<circle cx="${x}" cy="${y}" r="9.5" fill="url(#${u}silb)" ${ln}/><path d="M${x-6} ${y-3} H${x+6} M${x-6} ${y+1} H${x+6}" stroke="#000" stroke-opacity=".25" stroke-width="1.2"/>`;
+  if(beam){
+    s+=fist(65,86)+fist(74,116);
+    s+=`<path d="M58 84 C30 60 8 40 -20 20 L-20 0 C14 20 40 44 70 76 Z" fill="url(#${u}bm)" opacity=".95"/><ellipse cx="64" cy="100" rx="10" ry="26" fill="#FFFFFF" opacity=".55"/>`;
+    defs+=`<linearGradient id="${u}bm" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".35" stop-color="#BDF3FF"/><stop offset="1" stop-color="#4FC3FF" stop-opacity="0"/></linearGradient>`;
+  }else{ s+=fist(32,70)+fist(153,162); }
+  if(h.brace&&!beam) s+=`<path d="${cap(33.4,86,33,80,9.3,9)}" fill="${h.brace}" ${ln}/>`;
+  if(h.stars){ for(let i=0;i<7;i++){ const x=76+i*8; s+=`<circle cx="${x}" cy="${i%2?96:92}" r="2.4" fill="#F1F3F8" ${ln}/>`; } }
+  if(h.crystals){
+    const cc=h.crystals, dia=(x,y,r)=>`<path d="M${x} ${y-r} L${x+r*.7} ${y} L${x} ${y+r} L${x-r*.7} ${y} Z" fill="${cc}" stroke="${O}" stroke-width="1.6"/><path d="M${x} ${y-r} L${x} ${y+r}" stroke="#FFFFFF" stroke-opacity=".6" stroke-width="1"/>`;
+    s+=dia(80,98,7)+dia(120,98,7)+dia(46,98,5)+dia(154,108,5)+dia(86,214,5)+dia(114,214,5);
+  }
+  // 护甲
+  if(h.prot){
+    const pc=hx(h.prot);
+    defs+=metal(u+'pr',pc,56,144,true);
+    s+=`<path d="M57 80 C76 72 124 72 143 80 C149 88 147 99 140 104 C125 114 112 117 100 117 C88 117 75 114 60 104 C53 99 51 88 57 80 Z" fill="url(#${u}pr)" ${ln}/>`;
+    s+=`<path d="M64 92 C80 104 120 104 136 92 M72 82 C84 88 116 88 128 82" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="1.6"/>`;
+    if(h.protDots) for(let i=0;i<6;i++){ const x=70+i*12; s+=`<rect x="${x-2.5}" y="${i===0||i===5?90:94}" width="5" height="3" rx="1" fill="${mix(pc,-.35)}"/>`; }
+  }
+  // 彩色计时器
+  const T=h.timer||'round';
+  if(T==='round'||T==='crystal'){ s+=`<circle cx="100" cy="108" r="9" fill="url(#${u}sil)" ${ln}/><circle cx="100" cy="108" r="6" fill="url(#${u}tm)"/><circle cx="98" cy="106" r="1.7" fill="#FFFFFF"/>`; }
+  if(T==='x') s+=`<path d="M91 99 L100 105 L109 99 L113 103 L104 109 L113 115 L109 119 L100 113 L91 119 L87 115 L96 109 L87 103 Z" fill="url(#${u}tm)" ${ln}/>`;
+  if(T==='y') s+=`<path d="M100 96 C107 96 110 104 110 110 C110 118 105 124 100 124 C95 124 90 118 90 110 C90 104 93 96 100 96 Z" fill="url(#${u}tm)" ${ln}/><path d="M94 102 L100 110 L106 102 M100 110 V120" fill="none" stroke="#E8FBFF" stroke-width="2"/>`;
+  if(T==='ring') s+=`<circle cx="100" cy="108" r="11" fill="none" stroke="url(#${u}sil)" stroke-width="4"/><circle cx="100" cy="108" r="11" fill="none" stroke="${O}" stroke-width="1"/><circle cx="100" cy="108" r="6.5" fill="url(#${u}tm)" ${ln}/>`;
+  if(T==='gaia') s+=`<path d="M92 104 L100 98 L108 104 L108 114 L100 120 L92 114 Z" fill="url(#${u}tm)" ${ln}/>`;
+  // 脖子和头
+  s+=`<path d="M90 60 L110 60 L112 78 L88 78 Z" fill="url(#${u}sil)" ${ln}/>`;
+  const head='M100 19 C114 19 121 31 121 44 C121 57 114 68 100 70 C86 68 79 57 79 44 C79 31 86 19 100 19 Z';
+  // 头后面的冠
+  const cr=h.crest;
+  if(cr==='slugger'){ const sc=h.sc?fillOf(h.sc):`url(#${u}sil)`; s+=`<path d="M80 31 C84 9 116 9 120 31 L113 31 C109 19 91 19 87 31 Z" fill="${sc}" ${ln}/>`; }
+  if(cr==='double'){ s+=`<path d="${both('M79 36 L84 4 L96 25 Z')}" fill="url(#${u}silb)" ${ln}/><path d="${both('M84 12 L87 30')}" stroke="${hx(h.db||'R')}" stroke-width="3" stroke-linecap="round"/>`; }
+  if(cr==='horns') s+=`<path d="${both('M86 28 C79 19 77 8 81 -1 C83 9 88 16 95 22 Z')}" fill="url(#${u}silb)" ${ln}/>`;
+  if(cr==='bighorns') s+=`<path d="${both('M84 32 C68 28 58 12 62 -4 C67 9 76 18 90 24 Z')}" fill="url(#${u}silb)" ${ln}/>`;
+  if(cr==='smallhorns') s+=`<path d="${both('M88 25 C84 19 84 12 86 7 C88 13 91 18 95 21 Z')}" fill="url(#${u}silb)" ${ln}/>`;
+  if(cr==='hair') s+=`<path d="${both('M84 26 C70 30 68 52 76 70 C80 60 78 44 88 34 Z')}" fill="url(#${u}silb)" ${ln}/>`;
+  if(cr==='wingsHead') s+='';
+  s+=`<path d="${head}" fill="url(#${u}sil)" ${ln}/>`;
+  if(h.headA) s+=`<path d="${both('M80 36 C80 52 86 63 94 68 L95 63 C89 57 86 47 87 35 Z')}" fill="${fillOf(h.headA)}"/>`;
+  if(h.crest==='blazar') s+=`<path d="M80 36 C80 52 86 63 94 68 L97 60 C92 52 90 40 92 26 Z" fill="${fillOf('B')}"/>`;
+  s+=`<path d="M81 46 C78 46 77 50 79 54 M119 46 C122 46 123 50 121 54" fill="none" stroke="${O}" stroke-width="1.6"/>`;
+  // 头上的冠（前面的）
+  const finD='M96.5 42 C96 30 97 17 100 8 C103 17 104 30 103.5 42 Z';
+  if(['fin','leo','decker','zeta','cosmos','arcx'].includes(cr)){
+    s+=`<path d="${finD}" fill="url(#${u}sil)" ${ln}/>`;
+    if(cr==='leo') s+=`<path d="${both('M96.8 38 C96.4 28 97.5 18 100 10')}" fill="none" stroke="${C.R}" stroke-width="2.4"/>`;
+    else if(cr==='cosmos') s+=`<path d="${both('M96.8 38 C96.4 28 97.5 18 100 10')}" fill="none" stroke="${C.BL}" stroke-width="2.4"/>`;
+    else s+=`<path d="M100 12 V40" stroke="${hx((h.pat&&h.pat[0]&&h.pat[0][1])||'R')}" stroke-width="2.2" stroke-linecap="round"/>`;
+    if(cr==='zeta') s+=`<path d="${both('M86 32 L82 18 L92 28 Z')}" fill="url(#${u}sil)" ${ln}/>`;
+    if(cr==='decker') s+=`<path d="${both('M86 36 L84 26 L92 32 Z')}" fill="${C.B}" ${ln}/>`;
+  }
+  if(cr==='ace'){ s+=`<path d="M94.5 42 C94 26 96 12 100 6 C104 12 106 26 105.5 42 Z" fill="url(#${u}sil)" ${ln}/><circle cx="100" cy="17" r="2.4" fill="${O}"/>`; }
+  if(cr==='blade'){ s+=`<path d="M95 42 L100 2 L105 42 Z" fill="url(#${u}sil)" ${ln}/><path d="M97.4 38 L100 8 L102.6 38" fill="none" stroke="${C.R}" stroke-width="2"/>`; }
+  if(cr==='tiga'||cr==='trigger'){
+    const tc=hx(h.tc||'P');
+    s+=`<path d="${both('M100 21 C90 23 84 31 81 42')}" fill="none" stroke="${tc}" stroke-width="4" stroke-linecap="round"/><path d="M100 20 V30" stroke="#A9B1C2" stroke-width="3" stroke-linecap="round"/>`;
+    if(cr==='trigger') s+=`<path d="M93 30 L100 8 L107 30 L104 36 L96 36 Z" fill="${fillOf('R')}" ${ln}/>`;
+  }
+  if(cr==='gaia') s+=`<path d="M90 30 C90 13 110 13 110 30 L106 34 L94 34 Z" fill="url(#${u}sil)" ${ln}/><path d="M100 15 V33" stroke="${O}" stroke-width="2"/>`;
+  if(cr==='agul') s+=`<path d="M92 32 C92 8 108 8 108 32 L104 36 L96 36 Z" fill="${fillOf('B')}" ${ln}/><path d="M100 10 V34" stroke="${O}" stroke-width="2"/>`;
+  if(cr==='nexus') s+=`<path d="${both('M100 22 C94 26 90 32 88 38')}" fill="none" stroke="#000" stroke-opacity=".3" stroke-width="2"/><path d="M100 20 V36" stroke="#000" stroke-opacity=".3" stroke-width="2"/>`;
+  if(cr==='twinhorns') s+=`<path d="${both('M91 24 L86 4 L97 20 Z')}" fill="${fillOf(h.hc||'R')}" ${ln}/>`;
+  if(cr==='unihorn') s+=`<path d="M95.5 24 L100 -2 L104.5 24 Z" fill="${fillOf(h.hc||'B')}" ${ln}/>`;
+  if(cr==='blazar') s+=`<path d="M91 26 L93 2 L103 22 Z" fill="url(#${u}sil)" ${ln}/><path d="M93 6 L95 24" stroke="${C.B}" stroke-width="2.4"/>`;
+  if(cr==='arc') s+=`<path d="M96 42 C92 26 95 13 108 4 C103 16 103 28 104 42 Z" fill="url(#${u}sil)" ${ln}/><path d="M99 38 C97 26 99 16 106 8" fill="none" stroke="${C.R}" stroke-width="2"/>`;
+  if(cr==='v') s+=`<path d="M90 26 L100 41 L110 26 L105.5 26 L100 34 L94.5 26 Z" fill="#FF9A2E" ${ln}/><path d="M97 24 L100 8 L103 24 Z" fill="url(#${u}sil)" ${ln}/>`;
+  if(cr==='tiara'){ s+=`<path d="M87 28 C91 20 109 20 113 28 L100 24 Z" fill="${h.tiara}" ${ln}/><circle cx="100" cy="23" r="2.6" fill="#7FE3FF" ${ln}/>`; }
+  if(cr==='crown') s+=`<path d="M78 32 L80 11 L89 23 L100 4 L111 23 L120 11 L122 32 Z" fill="${fillOf('G')}" ${ln}/><circle cx="100" cy="22" r="3.6" fill="#E3262E" ${ln}/>`;
+  if(cr==='hair') s+=`<path d="M90 27 C94 21 106 21 110 27" fill="none" stroke="${O}" stroke-width="1.6"/>`;
+  if(h.gem) s+=`<path d="M100 31 L104 36 L100 41 L96 36 Z" fill="${h.gem}" ${ln}/>`;
+  if(h.lamp) s+=`<path d="M95 28 L105 28 L103 36 L97 36 Z" fill="${h.lamp}" ${ln}/>`;
+  // 眼睛
+  if(h.eye==='s'){
+    s+=`<path d="M80 39 L97 45 L95 52 L83 49 Z" fill="url(#${u}eye)" ${ln}/><path d="${mirror('M80 39 L97 45 L95 52 L83 49 Z')}" fill="url(#${u}eye)" ${ln}/>`;
+  }else{
+    s+=`<ellipse cx="91" cy="45.5" rx="7.6" ry="4.9" transform="rotate(18 91 45.5)" fill="url(#${u}eye)" ${ln}/><ellipse cx="109" cy="45.5" rx="7.6" ry="4.9" transform="rotate(-18 109 45.5)" fill="url(#${u}eye)" ${ln}/>`;
+  }
+  s+=`<path d="M86 44 L96 47 M104 47 L114 44" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="1"/><ellipse cx="88.5" cy="42.5" rx="2.2" ry="1.2" fill="#FFFFFF"/><ellipse cx="111.5" cy="42.5" rx="2.2" ry="1.2" fill="#FFFFFF"/>`;
+  s+=`<path d="M100 48 V56" stroke="#FFFFFF" stroke-opacity=".6" stroke-width="1.4"/><path d="M95 60 Q100 62.5 105 60" fill="none" stroke="#6C7488" stroke-width="2" stroke-linecap="round"/>`;
+  if(h.mustache) s+=`<path d="M88 58 C93 54 98 57 100 59 C102 57 107 54 112 58 C110 63 104 62 100 61 C96 62 90 63 88 58 Z" fill="url(#${u}sil)" ${ln}/>`;
+  if(h.beard) s+=`<path d="M85 57 C89 66 111 66 115 57 C117 76 109 90 100 94 C91 90 83 76 85 57 Z" fill="#FAFBFD" ${ln}/><path d="M92 70 C94 80 96 86 100 90 M108 70 C106 80 104 86 100 90" fill="none" stroke="#B9C0D3" stroke-width="1.4"/>`;
+  return `<svg viewBox="0 -8 200 270" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>${defs}</defs>${s}</svg>`;
+}
+
+/* ---------- 工程车、飞机、国防装备 ---------- */
+function vehicleSVG(c,opt){
+  opt=opt||{};
+  const u='v'+(++UID), gold=c.c==='gold', Cc=gold?`url(#${u}g)`:c.c, D='#30364C', OO='#1B2246';
+  const sw=`stroke="${OO}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"`;
+  const win=(x,y,w,h)=>{
+    const cx=x+w/2, ey=y+h*.45, dx=w*.2, r=Math.min(w,h*1.4)*.13;
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="#BFEFFF" ${sw}/>`+
+      `<circle cx="${cx-dx}" cy="${ey}" r="${r}" fill="#FFFFFF" stroke="${OO}" stroke-width="2"/><circle cx="${cx+dx}" cy="${ey}" r="${r}" fill="#FFFFFF" stroke="${OO}" stroke-width="2"/>`+
+      `<circle cx="${cx-dx+1.2}" cy="${ey+.8}" r="${r*.52}" fill="${OO}"/><circle cx="${cx+dx+1.2}" cy="${ey+.8}" r="${r*.52}" fill="${OO}"/>`+
+      `<path d="M${cx-w*.14} ${y+h*.74} Q${cx} ${y+h*.88} ${cx+w*.14} ${y+h*.74}" fill="none" stroke="${OO}" stroke-width="2.4" stroke-linecap="round"/>`;
+  };
+  const eyes=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#FFFFFF" stroke="${OO}" stroke-width="2"/><circle cx="${x+r*2.3}" cy="${y}" r="${r}" fill="#FFFFFF" stroke="${OO}" stroke-width="2"/><circle cx="${x+1}" cy="${y+.5}" r="${r*.5}" fill="${OO}"/><circle cx="${x+r*2.3+1}" cy="${y+.5}" r="${r*.5}" fill="${OO}"/>`;
+  const wheel=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${D}" ${sw}/><circle cx="${x}" cy="${y}" r="${r*.42}" fill="#B9C0D3"/>`;
+  let s=`<svg viewBox="0 0 200 236" preserveAspectRatio="xMidYMid ${opt.bg===false?'meet':'slice'}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>`+
+    `<linearGradient id="${u}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF2A8"/><stop offset=".45" stop-color="#FFC628"/><stop offset="1" stop-color="#D98A00"/></linearGradient>`+
+    `<clipPath id="${u}c"><ellipse cx="78" cy="140" rx="62" ry="33"/></clipPath></defs>`;
+  const bg=c.bg;
+  if(opt.bg!==false){
+    if(bg==='gold') s+=`<rect x="-30" y="-30" width="260" height="300" fill="#FFE9A6"/><circle cx="100" cy="120" r="110" fill="#FFF6D2"/>`;
+    else if(bg==='sea') s+=`<rect x="-30" y="-30" width="260" height="300" fill="#A6E1FF"/><rect x="-30" y="160" width="260" height="120" fill="#2F7FC9"/><path d="M-10 196 Q10 190 30 196 T70 196 T110 196 T150 196 T190 196 T230 196" fill="none" stroke="#BFE6FF" stroke-width="3"/>`;
+    else s+=`<rect x="-30" y="-30" width="260" height="300" fill="#A6E1FF"/><circle cx="168" cy="36" r="17" fill="#FFD54A"/><ellipse cx="44" cy="40" rx="24" ry="9" fill="#FFFFFF"/><ellipse cx="56" cy="33" rx="13" ry="8" fill="#FFFFFF"/>`;
+    if(bg==='ground'||bg==='gold') s+=`<rect x="-30" y="216" width="260" height="60" fill="#C98A4B"/><rect x="-30" y="214" width="260" height="5" fill="#A96C34"/>`;
+    if(bg==='sky') s+=`<ellipse cx="150" cy="200" rx="40" ry="12" fill="#FFFFFF"/><ellipse cx="40" cy="190" rx="30" ry="10" fill="#FFFFFF"/>`;
+  }
+  const v=c.v;
+  if(v==='digger'){
+    s+=`<rect x="24" y="188" width="114" height="28" rx="14" fill="${D}" ${sw}/>`;
+    [40,62,84,106,124].forEach((x,i)=>s+=`<circle cx="${x}" cy="202" r="${i===0||i===4?7:5}" fill="#8A92A8" stroke="${OO}" stroke-width="2"/>`);
+    s+=`<rect x="34" y="146" width="94" height="44" rx="8" fill="${Cc}" ${sw}/><rect x="38" y="98" width="52" height="52" rx="8" fill="${Cc}" ${sw}/>`+win(45,105,38,30);
+    s+=`<path d="M110 162 L148 86 L163 93 L125 168 Z" fill="${Cc}" ${sw}/><line x1="120" y1="150" x2="146" y2="100" stroke="#B9C0D3" stroke-width="5" stroke-linecap="round"/>`;
+    s+=`<path d="M148 86 L188 132 L177 141 L142 98 Z" fill="${Cc}" ${sw}/><path d="M170 134 L197 141 L190 178 L165 166 Z" fill="#6B7186" ${sw}/>`;
+  }else if(v==='dozer'){
+    s+=`<rect x="28" y="184" width="120" height="32" rx="16" fill="${D}" ${sw}/>`;
+    [44,70,96,122].forEach(x=>s+=`<circle cx="${x}" cy="200" r="6" fill="#8A92A8" stroke="${OO}" stroke-width="2"/>`);
+    s+=`<rect x="38" y="144" width="104" height="44" rx="7" fill="${Cc}" ${sw}/><rect x="120" y="106" width="9" height="40" fill="${D}" ${sw}/>`;
+    s+=`<rect x="48" y="96" width="58" height="52" rx="7" fill="${Cc}" ${sw}/>`+win(55,103,44,32);
+    s+=`<line x1="140" y1="172" x2="158" y2="172" stroke="${D}" stroke-width="9" stroke-linecap="round"/><path d="M150 132 L174 126 Q192 170 182 216 L156 216 Q166 174 150 132 Z" fill="#8C93A8" ${sw}/>`;
+  }else if(v==='mixer'){
+    s+=`<rect x="12" y="176" width="180" height="14" rx="4" fill="${D}" ${sw}/><rect x="58" y="162" width="44" height="16" fill="${D}" ${sw}/>`;
+    s+=`<g transform="rotate(-14 78 140)"><ellipse cx="78" cy="140" rx="62" ry="33" fill="#F2F4F8"/><g clip-path="url(#${u}c)" fill="none" stroke="${Cc}" stroke-width="11"><path d="M34 104 Q54 140 40 176"/><path d="M74 104 Q94 140 80 176"/><path d="M114 104 Q134 140 120 176"/></g><ellipse cx="78" cy="140" rx="62" ry="33" fill="none" ${sw}/></g>`;
+    s+=`<rect x="138" y="118" width="52" height="60" rx="9" fill="${Cc}" ${sw}/>`+win(146,126,36,28)+wheel(44,198,18)+wheel(94,198,18)+wheel(164,198,18);
+  }else if(v==='dump'){
+    s+=`<rect x="12" y="176" width="182" height="13" rx="4" fill="${D}" ${sw}/><path d="M80 120 Q104 82 130 100 Q156 80 186 120 Z" fill="#D9A55E" ${sw}/>`;
+    s+=`<path d="M74 116 L194 116 L190 178 L78 178 Z" fill="${Cc}" ${sw}/><path d="M104 124 L104 170 M134 124 L134 170 M164 124 L164 170" stroke="${OO}" stroke-width="2.5" opacity=".35"/>`;
+    s+=`<rect x="12" y="112" width="56" height="68" rx="9" fill="${Cc}" ${sw}/>`+win(20,120,40,30)+wheel(40,198,18)+wheel(130,198,18)+wheel(170,198,18);
+  }else if(v==='roller'){
+    s+=`<rect x="40" y="84" width="80" height="10" rx="4" fill="${D}" ${sw}/><rect x="52" y="92" width="62" height="56" rx="7" fill="${Cc}" ${sw}/>`+win(59,100,48,34);
+    s+=`<rect x="32" y="144" width="112" height="42" rx="8" fill="${Cc}" ${sw}/><rect x="134" y="150" width="22" height="38" fill="${Cc}" ${sw}/>`;
+    s+=`<circle cx="160" cy="188" r="28" fill="#9CA3B8" ${sw}/><circle cx="160" cy="188" r="11" fill="#D9DEE8" stroke="${OO}" stroke-width="2"/>`+wheel(62,192,24);
+  }else if(v==='crane'){
+    s+=`<rect x="44" y="148" width="54" height="20" rx="4" fill="${Cc}" ${sw}/><path d="M60 158 L144 30 L158 37 L80 164 Z" fill="${Cc}" ${sw}/>`;
+    let z='M66 156';for(let i=1;i<=8;i++){const t=i/8,sd=i%2;const x0=sd?80+78*t:60+84*t,y0=sd?164-127*t:158-128*t;z+=` L${f1(x0)} ${f1(y0)}`;}
+    s+=`<path d="${z}" fill="none" stroke="${OO}" stroke-width="2.2" opacity=".55"/><line x1="151" y1="36" x2="151" y2="94" stroke="${OO}" stroke-width="2.4"/>`;
+    s+=`<rect x="144" y="88" width="14" height="10" rx="2" fill="${D}"/><path d="M151 98 L151 106 Q151 114 143 111" fill="none" stroke="${OO}" stroke-width="3.5" stroke-linecap="round"/>`;
+    s+=`<rect x="12" y="166" width="182" height="24" rx="5" fill="${Cc}" ${sw}/><rect x="146" y="126" width="46" height="44" rx="8" fill="${Cc}" ${sw}/>`+win(153,132,32,26);
+    s+=wheel(38,198,16)+wheel(76,198,16)+wheel(132,198,16)+wheel(170,198,16);
+  }else if(v==='airliner'){
+    s+=`<path d="M92 112 L112 112 L98 88 L86 88 Z" fill="#C9D2DE" ${sw}/>`;
+    s+=`<path d="M26 108 L162 108 C180 108 194 118 194 126 C194 134 180 142 162 142 L32 142 C22 142 16 134 16 124 Z" fill="#F5F7FB" ${sw}/>`;
+    s+=`<path d="M22 126 H186" stroke="${Cc}" stroke-width="6"/><path d="M26 108 L12 70 L30 70 L52 108 Z" fill="${Cc}" ${sw}/><path d="M22 120 L4 112 L8 126 Z" fill="${Cc}" ${sw}/>`;
+    for(let x=46;x<=150;x+=13) s+=`<circle cx="${x}" cy="118" r="3.4" fill="#5B9BE0" stroke="${OO}" stroke-width="1.4"/>`;
+    s+=`<path d="M88 134 L122 134 L94 182 L74 182 Z" fill="#C9D2DE" ${sw}/><rect x="80" y="146" width="30" height="13" rx="6.5" fill="#9AA6B6" ${sw}/>`;
+    s+=eyes(164,117,5)+`<path d="M168 130 Q174 134 180 130" fill="none" stroke="${OO}" stroke-width="2.2" stroke-linecap="round"/>`;
+  }else if(v==='heli'){
+    s+=`<rect x="20" y="78" width="160" height="7" rx="3.5" fill="${D}" ${sw}/><rect x="94" y="84" width="12" height="16" fill="${D}" ${sw}/>`;
+    s+=`<path d="M70 126 L14 118 L14 132 L70 140 Z" fill="${Cc}" ${sw}/><circle cx="16" cy="118" r="13" fill="none" stroke="${D}" stroke-width="4" stroke-dasharray="6 5"/>`;
+    s+=`<path d="M60 128 C60 104 84 96 112 96 C146 96 168 112 168 132 C168 152 146 162 112 162 C84 162 60 152 60 128 Z" fill="${Cc}" ${sw}/>`;
+    s+=`<path d="M118 102 C140 102 160 114 162 130 L118 130 Z" fill="#BFEFFF" ${sw}/>`+eyes(128,116,5.5)+`<path d="M134 124 Q140 128 146 124" fill="none" stroke="${OO}" stroke-width="2.2" stroke-linecap="round"/>`;
+    s+=`<path d="M80 162 L74 182 M140 162 L146 182 M56 184 H170" stroke="${D}" stroke-width="5" stroke-linecap="round"/>`;
+  }else if(v==='transport'){
+    s+=`<path d="M22 112 L160 112 C182 112 194 124 194 132 C194 142 180 150 160 150 L40 150 C24 150 16 140 16 128 Z" fill="${Cc}" ${sw}/>`;
+    s+=`<path d="M30 112 L18 70 L36 70 L56 112 Z" fill="${Cc}" ${sw}/><path d="M10 70 H46" stroke="${OO}" stroke-width="5" stroke-linecap="round"/>`;
+    s+=`<path d="M60 108 L156 108 L150 116 L66 116 Z" fill="${mix(c.c,-.2)}" ${sw}/>`;
+    s+=`<rect x="74" y="116" width="22" height="12" rx="6" fill="#6B7586" ${sw}/><rect x="118" y="116" width="22" height="12" rx="6" fill="#6B7586" ${sw}/>`;
+    s+=eyes(166,124,5)+`<path d="M170 137 Q176 141 182 137" fill="none" stroke="${OO}" stroke-width="2.2" stroke-linecap="round"/><path d="M60 150 L58 160 M120 150 L122 160" stroke="${D}" stroke-width="4"/><circle cx="58" cy="164" r="5" fill="${D}"/><circle cx="122" cy="164" r="5" fill="${D}"/>`;
+  }else if(v==='fighter'||v==='stealth'){
+    const st=v==='stealth', fc=st?Cc:Cc;
+    s+=`<path d="M86 116 L128 116 L100 84 L84 84 Z" fill="${mix(c.c,-.25)}" ${sw}/>`;
+    s+= st ? `<path d="M14 126 L70 112 L150 114 L196 128 L150 142 L70 144 L14 132 Z" fill="${fc}" ${sw}/>`
+           : `<path d="M18 122 L60 114 L150 116 C170 118 186 124 196 128 C186 132 170 136 150 138 L60 140 L18 134 Z" fill="${fc}" ${sw}/>`;
+    s+=`<path d="${st?'M30 120 L16 86 L34 90 L52 116 Z':'M24 122 L14 88 L30 88 L52 118 Z'}" fill="${fc}" ${sw}/>`;
+    s+=`<path d="M70 134 L134 136 L96 178 L68 178 Z" fill="${mix(c.c,st?-.15:-.1)}" ${sw}/>`;
+    s+=`<path d="M124 116 C132 104 152 106 162 120 Z" fill="#BFEFFF" ${sw}/>`+eyes(136,113,4.2);
+    if(!st) s+=`<path d="M96 160 L82 176" stroke="#E3262E" stroke-width="4" stroke-linecap="round"/><circle cx="88" cy="132" r="5" fill="#E3262E" stroke="#FFD447" stroke-width="2"/>`;
+    s+=`<path d="M10 128 L2 124 L2 132 Z" fill="#FF9A2E"/>`;
+  }else if(v==='aew'){
+    s+=`<path d="M22 122 L160 122 C182 122 194 132 194 138 C194 146 180 154 160 154 L36 154 C24 154 16 146 16 136 Z" fill="${Cc}" ${sw}/>`;
+    s+=`<path d="M28 122 L16 86 L34 86 L54 122 Z" fill="${Cc}" ${sw}/><path d="M70 116 L84 96 M120 116 L106 96" stroke="${D}" stroke-width="5"/>`;
+    s+=`<ellipse cx="95" cy="90" rx="52" ry="11" fill="#F2F4F8" ${sw}/><path d="M43 90 H147" stroke="#2F7FE0" stroke-width="5"/>`;
+    s+=`<path d="M86 146 L124 146 L98 186 L76 186 Z" fill="${mix(c.c,-.15)}" ${sw}/>`+eyes(164,132,5)+`<path d="M168 145 Q174 149 180 145" fill="none" stroke="${OO}" stroke-width="2.2" stroke-linecap="round"/>`;
+  }else if(v==='tank'){
+    s+=`<rect x="14" y="190" width="172" height="28" rx="14" fill="${D}" ${sw}/>`;
+    [32,58,84,110,136,162].forEach(x=>s+=`<circle cx="${x}" cy="204" r="8" fill="#8A92A8" stroke="${OO}" stroke-width="2"/>`);
+    s+=`<path d="M16 168 L184 168 L174 194 L26 194 Z" fill="${Cc}" ${sw}/>`;
+    s+=`<rect x="126" y="140" width="72" height="9" rx="3" fill="${mix(c.c,-.25)}" ${sw}/>`;
+    s+=`<path d="M52 134 L132 134 L144 168 L44 168 Z" fill="${Cc}" ${sw}/><rect x="74" y="122" width="26" height="14" rx="4" fill="${mix(c.c,-.2)}" ${sw}/>`;
+    s+=`<rect x="86" y="142" width="40" height="16" rx="5" fill="#BFEFFF" ${sw}/>`+eyes(96,150,4.2)+`<path d="M40 180 H170" stroke="${OO}" stroke-width="2" opacity=".35"/>`;
+  }else if(v==='apc'){
+    s+=`<path d="M14 150 L148 150 L186 170 L186 198 L14 198 Z" fill="${Cc}" ${sw}/>`;
+    s+=`<path d="M150 152 L182 170 L150 170 Z" fill="#BFEFFF" ${sw}/>`+eyes(152,163,3.6);
+    s+=`<rect x="66" y="132" width="40" height="18" rx="4" fill="${mix(c.c,-.2)}" ${sw}/><rect x="104" y="136" width="44" height="6" rx="2" fill="${D}" ${sw}/>`;
+    s+=wheel(38,200,15)+wheel(76,200,15)+wheel(122,200,15)+wheel(160,200,15)+`<path d="M24 172 H140" stroke="${OO}" stroke-width="2" opacity=".35"/>`;
+  }else if(v==='rocket'){
+    s+=`<rect x="12" y="180" width="182" height="13" rx="4" fill="${D}" ${sw}/>`;
+    s+=`<g transform="rotate(-22 70 160)"><rect x="18" y="128" width="108" height="40" rx="4" fill="${Cc}" ${sw}/>`;
+    for(let r=0;r<2;r++) for(let k=0;k<5;k++) s+=`<circle cx="${30+k*21}" cy="${139+r*18}" r="6.5" fill="${D}" stroke="${OO}" stroke-width="1.6"/><circle cx="${30+k*21}" cy="${139+r*18}" r="3" fill="#E3262E"/>`;
+    s+=`</g><rect x="40" y="166" width="70" height="16" fill="${mix(c.c,-.2)}" ${sw}/>`;
+    s+=`<rect x="140" y="128" width="52" height="54" rx="8" fill="${Cc}" ${sw}/>`+win(148,136,36,26)+wheel(40,198,16)+wheel(80,198,16)+wheel(120,198,16)+wheel(168,198,16);
+  }else if(v==='carrier'){
+    s+=`<path d="M8 150 L194 150 L178 190 L26 190 Z" fill="${Cc}" ${sw}/><path d="M4 140 L198 140 L192 152 L10 152 Z" fill="#5D6676" ${sw}/>`;
+    s+=`<path d="M20 146 H180" stroke="#FFFFFF" stroke-width="1.6" stroke-dasharray="8 6"/>`;
+    s+=`<rect x="132" y="98" width="24" height="42" rx="3" fill="${Cc}" ${sw}/><rect x="140" y="80" width="8" height="18" fill="${D}" ${sw}/><path d="M132 84 H156" stroke="${D}" stroke-width="4"/>`;
+    s+=`<rect x="134" y="104" width="20" height="12" rx="3" fill="#BFEFFF" stroke="${OO}" stroke-width="2"/>`+eyes(139,110,2.6);
+    s+=`<path d="M34 138 L54 134 L60 138 L54 140 Z M70 138 L90 134 L96 138 L90 140 Z" fill="#9AA6B6" stroke="${OO}" stroke-width="1.6"/>`;
+    s+=`<path d="M36 168 H170" stroke="${OO}" stroke-width="2" opacity=".35"/>`;
+  }
+  if(gold||bg==='gold'){
+    const sp=(x,y,r)=>`<path d="M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r} Z" fill="#FFFFFF"/>`;
+    s+=sp(30,70,12)+sp(176,60,10)+sp(110,50,8)+sp(150,196,8)+sp(60,110,7);
+  }
+  return s+'</svg>';
+}
+
+function backSVG(){
+  const u='b'+(++UID);
+  return `<svg viewBox="0 0 100 140" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>`+
+    `<linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF4A4A"/><stop offset="1" stop-color="#B3141C"/></linearGradient>`+
+    `<radialGradient id="${u}t" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#E8FDFF"/><stop offset=".5" stop-color="#5EDCFF"/><stop offset="1" stop-color="#1592D8"/></radialGradient></defs>`+
+    `<rect width="100" height="140" fill="url(#${u}r)"/>`+
+    `<path d="M-10 92 L110 36 L110 62 L-10 118 Z" fill="#D7DCE6"/><path d="M-10 92 L110 36" stroke="#1B2246" stroke-width="1.6"/><path d="M-10 118 L110 62" stroke="#1B2246" stroke-width="1.6"/>`+
+    `<circle cx="50" cy="70" r="24" fill="#A9B1C2" stroke="#1B2246" stroke-width="2.4"/><circle cx="50" cy="70" r="16" fill="url(#${u}t)"/><circle cx="45" cy="64" r="4" fill="#FFFFFF"/>`+
+    `<text x="50" y="128" text-anchor="middle" font-family="Lilita One, Arial Rounded MT Bold, sans-serif" font-size="13" fill="#FFFFFF" letter-spacing="1">ULTRA CARD</text></svg>`;
+}
+
+const CARDS=[...HEROES.map(h=>Object.assign({kind:'hero'},h)),...VEHICLES];
+const BYID=Object.fromEntries(CARDS.map(c=>[c.id,c]));
+const SECTIONS=[['hero','奥特曼'],['car','工程车'],['air','飞机'],['army','国防装备']];
+const RARE={1:{orb:['#BDF0FF','#2E9BFF'],ray:'#5EDCFF',fx:['#5EDCFF','#FFFFFF','#2E9BFF']},
+            2:{orb:['#E9D6FF','#8A4DFF'],ray:'#B07CFF',fx:['#B07CFF','#FFFFFF','#FF8AD8','#5EDCFF']},
+            3:{orb:['#FFF4B8','#FFAE00'],ray:'#FFD447',fx:['#FFD447','#FFFFFF','#FF5A5A','#5EDCFF','#B07CFF']}};
+function artFor(c){ return c.kind==='hero'?heroSVG(c.id):vehicleSVG(c); }
+function power(c){ let h=0; for(const ch of c.id) h=(h*31+ch.charCodeAt(0))%997; const base={1:1500,2:3200,3:5600}[c.r], span={1:1400,2:1600,3:3200}[c.r]; return base+Math.round(h/997*span/50)*50; }
+const RK={1:'R',2:'SR',3:'SSR'};
+function cardHTML(c,facedown){
+  return `<div class="card r${c.r} k-${c.kind}"><div class="card-inner${facedown?' facedown':''}">`+
+    `<div class="face front"><div class="in"><div class="art">${artFor(c)}</div><div class="rk">${RK[c.r]}</div><div class="pw"><small>战力</small><b>${power(c)}</b></div>`+
+    `<div class="plate"><div class="st">${'★'.repeat(c.r)}</div><div class="nm${c.name.length>5?' long':''}">${c.name}</div></div>${c.r>=2?'<div class="holo"></div>':''}</div></div>`+
+    `<div class="face back"><div class="in">${backSVG()}</div></div></div></div>`;
+}
+
+/* ---------- 存档 ---------- */
+const KEY='haohao-ultra-cards-v1';
+let save={counts:{},total:0,sinceSuper:0,done:false,tries:0,machine:'digger',emptyRun:0};
+try{ const raw=localStorage.getItem(KEY); const s=raw&&JSON.parse(raw); if(s&&s.counts) save=Object.assign(save,s); }catch(e){}
+function persist(){ try{ localStorage.setItem(KEY,JSON.stringify(save)); }catch(e){} }
+const owned=()=>CARDS.filter(c=>save.counts[c.id]).length;
+
+/* ---------- 声音：音效 + 旁白 ---------- */
+let muted=false, ac=null;
+function audio(){ try{ if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch(e){ ac=null; } return ac; }
+function tone(f,t0,dur,type,vol,slide){
+  const a=audio(); if(!a||muted) return;
+  try{ const t=a.currentTime+t0, o=a.createOscillator(), g=a.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(f,t); if(slide) o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol||.2,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.05); }catch(e){}
+}
+function noise(t0,dur,vol,freq){
+  const a=audio(); if(!a||muted) return;
+  try{ const len=Math.floor(a.sampleRate*dur), buf=a.createBuffer(1,len,a.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len);
+    const src=a.createBufferSource(), fl=a.createBiquadFilter(), g=a.createGain(), t=a.currentTime+t0;
+    src.buffer=buf; fl.type='lowpass'; fl.frequency.value=freq||800; g.gain.value=vol||.3; src.connect(fl).connect(g).connect(a.destination); src.start(t); }catch(e){}
+}
+const sfx={
+  tap(){ tone(760,0,.08,'triangle',.12); },
+  dig(){ tone(170,0,.28,'sine',.55,48); noise(0,.3,.4,700); },
+  engine(){ tone(90,0,.18,'sawtooth',.08,120); },
+  orb(){ tone(380,0,.5,'triangle',.22,1300); tone(1300,.35,.25,'sine',.12,1700); },
+  boing(){ tone(300,0,.25,'sine',.25,120); tone(200,.12,.3,'triangle',.15,90); },
+  open(r){ const n=r===3?[523,659,784,1047,1319,1568,2093]:r===2?[523,659,784,1047,1319]:[523,659,784,1047];
+    n.forEach((f,i)=>{ tone(f,i*.11,.32,'triangle',.2); tone(f*2,i*.11,.18,'sine',.05); }); noise(0,.5,.12,4000); },
+  whoosh(){ tone(900,0,.4,'sine',.12,200); },
+};
+let zhVoice=null;
+function pickVoice(){ try{ const vs=speechSynthesis.getVoices();
+  zhVoice=vs.find(v=>/zh[-_]CN/i.test(v.lang)&&/Yunjian|Yunyang|Male|男/i.test(v.name))||vs.find(v=>/zh[-_]CN/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang))||null; }catch(e){} }
+if('speechSynthesis' in window){ pickVoice(); try{ speechSynthesis.addEventListener('voiceschanged',pickVoice); }catch(e){} }
+const player=new Audio(); player.preload='auto';
+let queue=[], qToken=0;
+function stopVoice(){ qToken++; queue=[]; try{ player.pause(); }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} }
+function say(keys){ stopVoice(); if(muted) return; queue=keys.filter(k=>TEXT[k]); next(qToken); }
+const HAS_AUDIO=Object.keys(AUDIO).length>0;
+// 只用一种声音：有录好的旁白就只放旁白，失败重试一次，再失败就跳过这一句；完全没有旁白时才用系统语音
+function next(tok){
+  if(tok!==qToken) return;
+  const k=queue.shift(); if(!k) return;
+  const done=()=>{ if(tok===qToken) next(tok); };
+  const url=AUDIO[k];
+  if(!url){ if(HAS_AUDIO) done(); else speak(k,done); return; }
+  let attempt=0;
+  const go=src=>{
+    if(tok!==qToken) return;
+    const my=++attempt; let failed=false;
+    const fail=()=>{ if(failed||my!==attempt||tok!==qToken) return; failed=true; if(my===1&&src!==url) go(url); else done(); };
+    player.onended=()=>{ if(my===attempt&&tok===qToken) done(); };
+    player.onerror=fail;
+    try{ player.src=src; const p=player.play(); if(p&&p.catch) p.catch(e=>{ if(e&&e.name==='AbortError') return; fail(); }); }catch(e){ fail(); }
+  };
+  const c=CLIP[k];
+  if(c&&c.url) go(c.url); else fetchClip(k).then(u=>go(u||url));
+}
+function speak(k,cb){
+  if(!('speechSynthesis' in window)){ cb(); return; }
+  try{ const u=new SpeechSynthesisUtterance(TEXT[k]); u.lang='zh-CN'; if(zhVoice) u.voice=zhVoice; u.rate=.95; u.pitch=.9; u.onend=cb; u.onerror=cb; speechSynthesis.speak(u); }catch(e){ cb(); }
+}
+const CLIP={};
+function fetchClip(k){
+  const url=AUDIO[k]; if(!url) return Promise.resolve(null);
+  if(!CLIP[k]){ CLIP[k]={p:fetch(url).then(r=>r.ok&&/audio|mpeg|octet/i.test(r.headers.get('content-type')||'')?r.blob():null).then(b=>{ const u=b?URL.createObjectURL(b):url; CLIP[k].url=u; return u; }).catch(()=>{ CLIP[k].url=url; return url; })}; }
+  return CLIP[k].p;
+}
+function warm(keys){ keys.forEach(k=>fetchClip(k)); }
+const FIXED=['c1','c2','c3','c4','c5','orb','orbGold','new','super','again','empty1','empty2','push','miss','grab','album','locked','choose','m_digger','m_dozer','m_crane','m_mixer','soundon','welcome','hello','done'];
+
+/* ---------- 粒子 ---------- */
+const fx=$('#fx'), ctx=fx.getContext('2d'); let parts=[], running=false;
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function sizeFx(){ const d=Math.min(window.devicePixelRatio||1,2); fx.width=innerWidth*d; fx.height=innerHeight*d; ctx.setTransform(d,0,0,d,0,0); }
+sizeFx(); addEventListener('resize',sizeFx);
+function burst(x,y,o){
+  const n=Math.round((o.n||30)*(reduce?.3:1));
+  for(let i=0;i<n;i++){ const a=(o.angle!=null?o.angle:-Math.PI/2)+(Math.random()-.5)*(o.spread||Math.PI*2), sp=(o.speed||7)*(.4+Math.random()*.8);
+    parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:o.gravity==null?.25:o.gravity,life:0,max:(o.life||70)*(.7+Math.random()*.5),
+      c:o.colors[i%o.colors.length],r:(o.size||7)*(.5+Math.random()*.8),rot:Math.random()*6,vr:(Math.random()-.5)*.3,shape:o.shape||'star'}); }
+  if(!running){ running=true; requestAnimationFrame(tick); }
+}
+function star(x,y,r,rot){ ctx.beginPath(); for(let i=0;i<10;i++){ const a=rot+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);} ctx.closePath(); ctx.fill(); }
+function tick(){
+  ctx.clearRect(0,0,innerWidth,innerHeight); parts=parts.filter(p=>p.life<p.max);
+  for(const p of parts){ p.life++; p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.vx*=.985; p.rot+=p.vr;
+    ctx.globalAlpha=Math.max(0,1-p.life/p.max); ctx.fillStyle=p.c;
+    if(p.shape==='dot'){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill(); } else star(p.x,p.y,p.r,p.rot); }
+  ctx.globalAlpha=1; if(parts.length) requestAnimationFrame(tick); else { running=false; ctx.clearRect(0,0,innerWidth,innerHeight); }
+}
+const scene=$('#scene');
+function toScreen(x,y){ const m=scene.getScreenCTM(); return m?{x:m.a*x+m.c*y+m.e,y:m.b*x+m.d*y+m.f}:{x:innerWidth/2,y:innerHeight/2}; }
+function centerOf(el){ const r=el.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; }
+
+/* ---------- 抽卡规则 ---------- */
+const rand=a=>a[Math.floor(Math.random()*a.length)];
+function pick(){
+  if(save.total===0) return rand(CARDS.filter(c=>c.kind==='hero'&&c.r===2));
+  const roll=Math.random()*100; const r=save.sinceSuper>=7?3:roll<10?3:roll<40?2:1;
+  let pool=CARDS.filter(c=>c.r===r); const fresh=pool.filter(c=>!save.counts[c.id]);
+  if(fresh.length&&Math.random()<.75) pool=fresh;
+  else if(!fresh.length&&Math.random()<.5){ const any=CARDS.filter(c=>!save.counts[c.id]); if(any.length) pool=any; }
+  return rand(pool);
+}
+// 五分之一挖空；第一次不空，也不会连空三次
+function isEmpty(){ if(save.total===0||save.emptyRun>=2) return false; return Math.random()<.2; }
+
+/* ---------- 四种工程车玩法 ---------- */
+const MACHINES={
+  digger:{name:'挖掘机',verb:'Dig!',steps:3,voice:'m_digger',color:'#FFC21A'},
+  dozer:{name:'推土机',verb:'Push!',steps:3,voice:'m_dozer',color:'#FFAA1F',hold:true},
+  crane:{name:'大吊车',verb:'Drop!',steps:1,voice:'m_crane',color:'#FFC21A'},
+  mixer:{name:'搅拌车',verb:'Spin!',steps:5,voice:'m_mixer',color:'#F36B2B'}
+};
+const actBtn=$('#actBtn'), mound=$('#mound'), glow=$('#moundGlow'), orb=$('#orb'), rock=$('#rock');
+let state='start', step=0, busy=false, current=null, empty=false, holdP=0, holdTimer=null, craneRAF=0, craneT=0, craneAngle=0, craneMiss=0;
+const M=()=>MACHINES[save.machine]||MACHINES.digger;
+
+function buildMeter(){
+  const m=M(), el=$('#meter');
+  el.innerHTML = m.hold ? '<div class="holdbar"><i id="holdFill"></i></div>' : Array.from({length:m.steps},(_,i)=>`<span class="light" id="l${i+1}"></span>`).join('');
+}
+function setMeter(){ const m=M(); if(m.hold){ const f=$('#holdFill'); if(f) f.style.width=(holdP*100)+'%'; } else for(let i=1;i<=m.steps;i++){ const l=$('#l'+i); if(l) l.classList.toggle('on',step>=i); } }
+function setMachine(id){
+  save.machine=id; persist();
+  document.querySelectorAll('.machine').forEach(g=>g.classList.toggle('on',g.id==='m-'+id));
+  $('#actLabel').textContent=MACHINES[id].verb; actBtn.setAttribute('aria-label',MACHINES[id].verb);
+  buildMeter(); resetRound();
+}
+function updateAlbumCount(){ $('#albumCount').textContent=`${owned()}/${CARDS.length}`; }
+function setOrbColor(r){ const R=RARE[r];
+  $('#orbS1').setAttribute('stop-color',R.orb[0]); $('#orbS2').setAttribute('stop-color',R.orb[1]);
+  $('#glowS1').setAttribute('stop-color',R.orb[1]); $('#glowS2').setAttribute('stop-color',R.orb[1]); orb.classList.toggle('super',r===3); }
+function beginRound(){
+  if(step===0&&holdP===0){
+    empty=isEmpty(); current=empty?null:pick();
+    if(current){ setOrbColor(current.r); warm(['n_'+current.id,'i_'+current.id,'new','super','again']); }
+    else { $('#glowS1').setAttribute('stop-color','#B9C0D3'); $('#glowS2').setAttribute('stop-color','#B9C0D3'); }
+    actBtn.classList.remove('pulse');
+  }
+}
+function shake(id){ const g=$(id); if(!g) return; g.classList.remove('shake'); void g.getBBox(); g.classList.add('shake'); }
+function dirt(x,y){ const p=toScreen(x,y); burst(p.x,p.y,{n:20,colors:['#A96C34','#C98A4B','#7A4B22','#D9A55E'],speed:8,shape:'dot',size:5,spread:1.6,life:50}); }
+function progressTo(frac){ mound.style.transform=`scale(${1-frac*.18},${1-frac*.38})`; glow.setAttribute('opacity',String(Math.min(1,frac))); }
+
+function act(){
+  if(state==='orb'){ openOrb(); return; }
+  if(state!=='idle'||busy) return;
+  const id=save.machine;
+  if(id==='digger') digStep();
+  else if(id==='mixer') mixStep();
+  else if(id==='crane') craneDrop();
+  else if(id==='dozer'){ /* 推土机靠按住 */ if(holdTimer===null){ holdStart(); setTimeout(holdEnd,450); } }
+}
+function digStep(){
+  beginRound(); busy=true; step++; sfx.tap(); $('#arm').style.transform='rotate(13deg)';
+  setTimeout(()=>{ sfx.dig(); shake('#m-digger'); dirt(282,205); progressTo(step/3); setMeter(); say(['c'+step]); },230);
+  setTimeout(()=>{ $('#arm').style.transform='rotate(-12deg)'; },500);
+  setTimeout(()=>{ busy=false; if(step>=3) finishRound(); },800);
+}
+let drumPos=0;
+function mixStep(){
+  beginRound(); busy=true; step++; sfx.engine(); drumPos-=40; $('#drumStripes').style.transform=`translateX(${drumPos}px)`;
+  if(drumPos<=-80) setTimeout(()=>{ const d=$('#drumStripes'); d.style.transition='none'; drumPos+=80; d.style.transform=`translateX(${drumPos}px)`; void d.getBBox(); d.style.transition=''; },520);
+  shake('#m-mixer'); progressTo(step/5*.6); setMeter(); say(['c'+step]);
+  setTimeout(()=>{ busy=false; if(step>=5){ busy=true; $('#pour').classList.add('on'); sfx.dig(); dirt(256,206); progressTo(1); setTimeout(()=>{ $('#pour').classList.remove('on'); busy=false; finishRound(); },900); } },380);
+}
+function holdStart(){
+  if(state!=='idle'||save.machine!=='dozer'||holdTimer!==null) return;
+  beginRound(); actBtn.classList.add('held'); if(holdP===0) say(['push']);
+  holdTimer=setInterval(()=>{
+    const before=Math.floor(holdP*3); holdP=Math.min(1,holdP+.025); const after=Math.floor(holdP*3);
+    $('#dozerMove').style.transform=`translateX(${holdP*40}px)`; progressTo(holdP); setMeter();
+    if(Math.random()<.35) sfx.engine();
+    if(after>before&&after<=3){ step=after; dirt(250,214); }
+    if(holdP>=1){ holdEnd(); shake('#m-dozer'); sfx.dig(); finishRound(); }
+  },50);
+}
+function holdEnd(){ if(holdTimer!==null){ clearInterval(holdTimer); holdTimer=null; } actBtn.classList.remove('held'); }
+const TIP={x:318,y:54};
+function craneLoop(t){
+  if(save.machine!=='crane'||state!=='idle'||busy){ craneRAF=0; return; }
+  craneT+=1/60; craneAngle=Math.sin(craneT*1.9)*32;
+  $('#hook').setAttribute('transform',`rotate(${f1(craneAngle)} ${TIP.x} ${TIP.y})`);
+  craneRAF=requestAnimationFrame(craneLoop);
+}
+function startCrane(){ if(!craneRAF&&save.machine==='crane') craneRAF=requestAnimationFrame(craneLoop); }
+function setCable(len){ $('#cable').setAttribute('y2',String(TIP.y+len)); $('#hookHead').setAttribute('transform',`translate(0 ${len-70})`); }
+function craneDrop(){
+  beginRound(); busy=true; sfx.tap();
+  const hookX=TIP.x+Math.sin(craneAngle*Math.PI/180)*90;
+  const hit=Math.abs(hookX-322)<24||craneMiss>=2;
+  let len=70; const down=setInterval(()=>{ len+=4; setCable(len); if(len>=112){ clearInterval(down);
+    if(hit){ dirt(322,190); sfx.dig(); step=1; setMeter(); progressTo(1); say(['grab']);
+      setTimeout(()=>{ const up=setInterval(()=>{ len-=4; setCable(len); if(len<=70){ clearInterval(up); busy=false; craneMiss=0; finishRound(); } },16); },300);
+    }else{ craneMiss++; sfx.boing(); say(['miss']);
+      setTimeout(()=>{ const up=setInterval(()=>{ len-=4; setCable(len); if(len<=70){ clearInterval(up); busy=false; startCrane(); } },16); },350);
+    } } },16);
+}
+function finishRound(){
+  save.tries=(save.tries||0)+1; persist();
+  actBtn.classList.add('pulse');
+  if(empty){
+    state='empty'; save.emptyRun=(save.emptyRun||0)+1; persist();
+    rock.classList.add('up'); sfx.boing(); say([Math.random()<.5?'empty1':'empty2']);
+    actBtn.disabled=true;
+    setTimeout(()=>{ rock.classList.remove('up'); actBtn.disabled=false; afterRound(); },2600);
+    return;
+  }
+  save.emptyRun=0; persist();
+  state='orb'; orb.classList.add('up'); sfx.orb();
+  setTimeout(()=>{ const p=toScreen(322,150); burst(p.x,p.y,{n:26,colors:RARE[current.r].fx,speed:6,size:7,gravity:.12}); },350);
+  actBtn.classList.add('open','r'+current.r); $('#actLabel').textContent='Open!'; actBtn.setAttribute('aria-label','Open');
+  say([current.r===3?'orbGold':'orb']);
+}
+function openOrb(){
+  if(state!=='orb') return; state='reveal';
+  const c=current, prev=save.counts[c.id]||0;
+  save.counts[c.id]=prev+1; save.total++; save.sinceSuper=c.r===3?0:save.sinceSuper+1; persist();
+  const f=$('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); sfx.open(c.r);
+  showCard(c,{isNew:prev===0,count:prev+1});
+}
+function resetRound(){
+  holdEnd(); state=state==='start'?'start':'idle'; step=0; holdP=0; current=null; empty=false; busy=false; craneMiss=0;
+  orb.classList.remove('up','super'); rock.classList.remove('up'); mound.style.transform=''; glow.setAttribute('opacity','0');
+  $('#dozerMove').style.transform=''; $('#arm').style.transform='rotate(-12deg)'; setCable(70);
+  actBtn.className='pulse'; actBtn.disabled=false; $('#actLabel').textContent=M().verb; actBtn.setAttribute('aria-label',M().verb);
+  setMeter(); startCrane();
+}
+function afterRound(){
+  resetRound();
+  if(save.tries>0&&save.tries%10===0) openChooser(true);
+}
+
+/* ---------- 翻卡 ---------- */
+let viewOnly=false, shown=null;
+function seqFor(c,o){
+  if(o.view) return ['n_'+c.id,'i_'+c.id];
+  if(o.isNew) return [...(c.r===3?['super']:['new']),'n_'+c.id,'i_'+c.id];
+  return ['again','n_'+c.id];
+}
+function showCard(c,o){
+  viewOnly=!!o.view; shown={c,o};
+  const rv=$('#reveal'), holder=$('#revealCard'), info=$('#rinfo'), btns=$('#rbtns');
+  rv.style.setProperty('--ray',RARE[c.r].ray);
+  holder.style.transition='none'; holder.style.transform=''; holder.style.opacity='';
+  holder.innerHTML=cardHTML(c,!viewOnly);
+  holder.classList.remove('pop'); void holder.offsetWidth; holder.classList.add('pop');
+  $('#rName').textContent=c.name; $('#rTag').textContent=c.tag||'';
+  $('#rIntro').textContent=c.intro||c.say||''; $('#rIntro').scrollTop=0;
+  const badge=$('#rBadge');
+  if(viewOnly){ badge.textContent=`×${save.counts[c.id]||0}`; badge.className='rbadge dup'; }
+  else if(o.isNew){ badge.textContent=c.r===3?'超级稀有 NEW':'NEW'; badge.className='rbadge'; }
+  else { badge.textContent=`×${o.count}`; badge.className='rbadge dup'; }
+  $('#collectBtn').textContent=viewOnly?'Back':'Save';
+  info.classList.add('hide'); btns.classList.add('hide'); rv.hidden=false;
+  const after=()=>{
+    const p=centerOf(holder);
+    burst(p.x,p.y,{n:c.r===3?90:c.r===2?60:40,colors:RARE[c.r].fx,speed:c.r===3?13:10,size:c.r===3?10:8,gravity:.18,life:90});
+    if(c.r===3) setTimeout(()=>burst(p.x,p.y-60,{n:50,colors:RARE[3].fx,speed:11,size:9,gravity:.15,life:90}),400);
+    info.classList.remove('hide'); setTimeout(()=>btns.classList.remove('hide'),viewOnly?0:700);
+    say(seqFor(c,o));
+  };
+  if(viewOnly) setTimeout(after,250);
+  else setTimeout(()=>{ holder.querySelector('.card-inner').classList.remove('facedown'); setTimeout(after,450); },700);
+}
+function collect(){
+  const rv=$('#reveal'), holder=$('#revealCard');
+  stopVoice();
+  if(viewOnly){ rv.hidden=true; return; }
+  const a=centerOf(holder), b=centerOf($('#albumBtn'));
+  holder.style.transition='transform .55s cubic-bezier(.5,-.3,.7,1),opacity .55s';
+  holder.style.transform=`translate(${b.x-a.x}px,${b.y-a.y}px) scale(.1) rotate(25deg)`; holder.style.opacity='.4';
+  $('#rinfo').classList.add('hide'); $('#rbtns').classList.add('hide'); sfx.whoosh();
+  setTimeout(()=>{
+    rv.hidden=true; updateAlbumCount();
+    const ab=$('#albumBtn'); ab.classList.remove('bump'); void ab.offsetWidth; ab.classList.add('bump');
+    burst(b.x,b.y,{n:16,colors:['#FFD447','#FFFFFF'],speed:5,size:6,gravity:.1,life:40}); sfx.tap();
+    if(owned()===CARDS.length&&!save.done){ save.done=true; persist(); celebrate(); resetRound(); return; }
+    afterRound();
+  },560);
+}
+function celebrate(){
+  say(['done']);
+  for(let i=0;i<5;i++) setTimeout(()=>burst(innerWidth*(.2+Math.random()*.6),innerHeight*(.3+Math.random()*.3),{n:60,colors:RARE[3].fx,speed:12,size:9,life:90}),i*350);
+}
+
+/* ---------- 选工程车 ---------- */
+function machineIcon(id){
+  const fake={digger:{v:'digger',c:'#FFC21A'},dozer:{v:'dozer',c:'#FFAA1F'},crane:{v:'crane',c:'#FFC21A'},mixer:{v:'mixer',c:'#F36B2B'}}[id];
+  return vehicleSVG(Object.assign({bg:'ground'},fake));
+}
+function openChooser(auto){
+  const g=$('#chGrid');
+  g.innerHTML=Object.entries(MACHINES).map(([id,m])=>`<button class="ch-item${id===save.machine?' cur':''}" data-m="${id}" aria-label="${m.name}">${machineIcon(id)}<span class="ch-name">${m.name}</span><span class="ch-verb">${m.verb}</span></button>`).join('');
+  $('#chSub').textContent=auto?`已经挖了 ${save.tries} 次，换一种玩法吧`:'每挖 10 次，就能换一种玩法';
+  $('#chooser').hidden=false; $('#machineBtn').hidden=false; save.unlocked=true; persist();
+  say(['choose']);
+}
+$('#chGrid').addEventListener('click',e=>{
+  const b=e.target.closest('.ch-item'); if(!b) return;
+  sfx.open(1); $('#chooser').hidden=true; setMachine(b.dataset.m); say([MACHINES[b.dataset.m].voice]);
+});
+$('#machineBtn').addEventListener('click',()=>{ if(state!=='idle'||step>0||holdP>0) return; sfx.tap(); openChooser(false); });
+
+/* ---------- 卡册 ---------- */
+function renderAlbum(){
+  const n=owned();
+  $('#albumNum').textContent=`${n}/${CARDS.length}`; $('#albumBar').style.width=(n/CARDS.length*100)+'%';
+  $('#albumScroll').innerHTML=SECTIONS.map(([kind,label])=>{
+    const list=CARDS.filter(c=>c.kind===kind); const got=list.filter(c=>save.counts[c.id]).length;
+    return `<div class="al-sec">${label} <small>${got}/${list.length}</small></div><div class="grid">`+list.map(c=>{
+      const k=save.counts[c.id]||0;
+      return k?`<button class="slot" data-id="${c.id}" aria-label="${c.name}">${k>1?`<span class="cnt">×${k}</span>`:''}${cardHTML(c,false)}</button>`
+              :`<button class="slot" data-lock="1" aria-label="?"><div class="lock">?</div></button>`;
+    }).join('')+'</div>';
+  }).join('')+`<div class="al-foot"><button id="resetBtn">Reset</button></div>`;
+}
+function openAlbum(){ if(state==='start') return; sfx.tap(); renderAlbum(); $('#album').hidden=false; say(['album']); }
+$('#albumBtn').addEventListener('click',openAlbum);
+$('#closeAlbum').addEventListener('click',()=>{ sfx.tap(); stopVoice(); $('#album').hidden=true; });
+let resetArmed=0;
+$('#album').addEventListener('click',e=>{
+  if(e.target.id==='resetBtn'){
+    const b=e.target;
+    if(Date.now()-resetArmed<4000){
+      save={counts:{},total:0,sinceSuper:0,done:false,tries:0,machine:save.machine,emptyRun:0,unlocked:save.unlocked}; persist(); renderAlbum(); updateAlbumCount(); resetArmed=0; return;
+    }
+    resetArmed=Date.now(); b.textContent='Tap again to reset'; b.classList.add('warn');
+    setTimeout(()=>{ if(Date.now()-resetArmed>=3900&&b.isConnected){ b.textContent='Reset'; b.classList.remove('warn'); } },4000);
+    return;
+  }
+  const s=e.target.closest('.slot'); if(!s) return;
+  if(s.dataset.lock){ sfx.tap(); say(['locked']); return; }
+  sfx.open(1); showCard(BYID[s.dataset.id],{view:true});
+});
+
+/* ---------- 绑定 ---------- */
+actBtn.addEventListener('pointerdown',e=>{ if(save.machine==='dozer'&&state==='idle'){ e.preventDefault(); try{actBtn.setPointerCapture(e.pointerId);}catch(_){} holdStart(); } });
+['pointerup','pointercancel','pointerleave'].forEach(t=>actBtn.addEventListener(t,holdEnd));
+actBtn.addEventListener('click',e=>{ e.stopPropagation(); if(save.machine==='dozer'&&state==='idle') return; act(); });
+actBtn.addEventListener('keydown',e=>{ if(save.machine==='dozer'&&state==='idle'&&(e.key===' '||e.key==='Enter')){ e.preventDefault(); holdStart(); } });
+actBtn.addEventListener('keyup',e=>{ if(e.key===' '||e.key==='Enter') holdEnd(); });
+const stage=$('#stage');
+stage.addEventListener('pointerdown',e=>{ if(save.machine==='dozer'&&state==='idle'){ holdStart(); } });
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,holdEnd));
+stage.addEventListener('click',()=>{ if(save.machine==='dozer'&&state==='idle') return; act(); });
+orb.addEventListener('click',e=>{ e.stopPropagation(); openOrb(); });
+$('#collectBtn').addEventListener('click',()=>{ sfx.tap(); collect(); });
+$('#againBtn').addEventListener('click',()=>{ if(shown) say(seqFor(shown.c,{view:true})); });
+$('#revealCard').addEventListener('click',()=>{ if(shown&&!$('#rinfo').classList.contains('hide')) say(['n_'+shown.c.id]); });
+$('#soundBtn').addEventListener('click',()=>{
+  muted=!muted; $('#waves').style.display=muted?'none':''; $('#mutex').style.display=muted?'':'none';
+  if(muted) stopVoice(); else { sfx.tap(); say(['soundon']); }
+});
+// 画墙图：迪迦 + 挖掘机
+$('#startArt').innerHTML=heroSVG('tiga').replace('<svg','<svg class="hero"')+vehicleSVG({v:'digger',c:'#FFC21A'},{bg:false});
+// 吊车桁架
+(function(){ let z='M122 186'; for(let i=1;i<=12;i++){ const t=i/12, sd=i%2; const x=sd?132+(322-132)*t:112+(312-112)*t, y=sd?194+(60-194)*t:184+(48-184)*t; z+=` L${f1(x)} ${f1(y)}`; } $('#craneLattice').setAttribute('d',z); })();
+$('#startBtn').addEventListener('click',()=>{
+  audio(); try{ const k0=owned()?'welcome':'hello'; if(AUDIO[k0]){ player.src=AUDIO[k0]; const pp=player.play(); if(pp&&pp.catch) pp.catch(()=>{}); } }catch(e){}
+  sfx.open(2); $('#start').hidden=true; state='idle'; warm(FIXED);
+  setMachine(MACHINES[save.machine]?save.machine:'digger');
+  if(save.unlocked) $('#machineBtn').hidden=false;
+  CLIP[owned()?'welcome':'hello']={url:AUDIO[owned()?'welcome':'hello'],p:Promise.resolve(AUDIO[owned()?'welcome':'hello'])};
+  say([owned()?'welcome':'hello']);
+});
+document.querySelectorAll('.machine').forEach(g=>g.classList.toggle('on',g.id==='m-'+(MACHINES[save.machine]?save.machine:'digger')));
+updateAlbumCount();
+window.__game={heroSVG,CARDS,save};
+})();
+</script>
+
+</body>
+</html>
