@@ -995,7 +995,7 @@ function startFight(mon){
   setTimeout(()=>{ heroEl.style.transition=''; heroEl.style.transform=''; sfx.stomp(); shake=18; dust(G.hx,G.groundY,G.hw); heroEl.classList.add('idle'); },1260);
   setTimeout(()=>{ monEl.style.transition='none'; monEl.style.transform='translateY(70%)'; monEl.style.opacity='1'; void monEl.offsetWidth;
     monEl.style.transition='transform 1.1s cubic-bezier(.2,.9,.3,1)'; monEl.style.transform='translateY(0)'; shake=14; dust(G.mx,G.groundY,G.mw*1.4); sfx.roar(); for(let i=0;i<14;i++) emit({t:'debris',x:G.mx+(Math.random()-.5)*G.mw,y:G.groundY,vx:(Math.random()-.5)*6,vy:-4-Math.random()*6,r:2+Math.random()*4,rot:0,life:0,max:70}); },1700);
-  setTimeout(()=>{ monEl.style.transition=''; monEl.style.transform=''; monEl.classList.add('idle'); $('#controls').hidden=false; busy=false; fightStart=Date.now(); say([...(RIVAL[save.hero]===mon.id?['f_rival']:[]),'f_n_'+mon.id,'f_go']); scheduleAttack(4200); },3000);
+  setTimeout(()=>{ monEl.style.transition=''; monEl.style.transform=''; monEl.classList.add('idle'); $('#controls').hidden=false; busy=false; fightStart=Date.now(); say([...(RIVAL[save.hero]===mon.id?['f_rival']:[]),'f_n_'+mon.id,'f_go']); scheduleAttack(2800); },3000);
 }
 function flash(){ const f=$('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
 function punch(){
@@ -1023,7 +1023,7 @@ function shieldUp(){
   Object.assign(s.style,{width:r*2+'px',height:r*2+'px',left:(c.x-r)+'px',top:(c.y-r)+'px'}); stage.appendChild(s);
   $('#bShield').classList.add('cool'); setTimeout(()=>{ s.remove(); $('#bShield').classList.remove('cool'); if(curPose==='guard'&&!busy) setPose('stand'); },1300);
 }
-function scheduleAttack(ms){ clearTimeout(attackTimer); attackTimer=setTimeout(monsterAttack,ms||(5200+Math.random()*2400)); }
+function scheduleAttack(ms){ clearTimeout(attackTimer); attackTimer=setTimeout(monsterAttack,ms||(3000+Math.random()*1500)); // 两次攻击之间歇 3~4.5 秒（原来 5.2~7.6 秒） }
 function monsterAttack(){
   if(!inFight||busy||hp<=0) return;
   monEl.classList.add('charge'); $('#bShield').classList.add('alert'); sfx.roar(); const mk=document.createElement('div'); mk.className='warnmark'; mk.textContent='!'; const p=monPoint(70,0); mk.style.left=(p.x-20)+'px'; mk.style.top=(p.y-60)+'px'; stage.appendChild(mk);
