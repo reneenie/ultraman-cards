@@ -36,12 +36,18 @@ button:focus-visible{outline:4px solid var(--timer);outline-offset:3px}
 .photo{width:100%;height:100%;display:block;object-fit:contain;object-position:50% 100%;-webkit-user-drag:none;
   filter:brightness(.92) contrast(1.06) saturate(1.06) drop-shadow(-6px -4px 10px rgba(255,140,80,.28)) drop-shadow(0 0 14px rgba(120,140,255,.25))}
 .photo.mir{transform:scaleX(-1)}
-img.photo{transition:transform .13s cubic-bezier(.3,1.5,.5,1);transform-origin:50% 100%}
-#heroArt[data-pose=punch] img.photo{transform:rotate(10deg) translateX(5%)}
-#heroArt[data-pose=kick] img.photo{transform:rotate(-12deg) translateX(6%)}
-#heroArt[data-pose=guard] img.photo{transform:rotate(-4deg) scale(.96)}
-#heroArt[data-pose=beam] img.photo{transform:rotate(5deg)}
-#heroArt[data-pose=win] img.photo{transform:translateY(-5%) scale(1.04)}
+img.photo{transform-origin:50% 100%;transition:transform .14s cubic-bezier(.3,1.4,.5,1)}
+/* 整张图的动作：先后仰蓄力，再前冲；身体始终是完整的一张图 */
+#heroArt[data-pose=punch] img.photo,#heroArt[data-pose=thrown] img.photo{animation:pPunch .27s cubic-bezier(.2,.9,.3,1) both}
+#heroArt[data-pose=kick] img.photo{animation:pKick .27s cubic-bezier(.2,.9,.3,1) both}
+#heroArt[data-pose=guard] img.photo{transform:rotate(-6deg) translateX(-5%) scale(1.02,.94)}
+#heroArt[data-pose=windup] img.photo{transform:rotate(-13deg) translateX(-6%)}
+#heroArt[data-pose=beam] img.photo,#heroArt[data-pose=cross] img.photo,#heroArt[data-pose=L] img.photo,#heroArt[data-pose=T] img.photo,#heroArt[data-pose=head] img.photo{animation:pCharge .8s ease-out both}
+#heroArt[data-pose=win] img.photo{animation:pWin .55s ease-in-out infinite alternate}
+@keyframes pPunch{0%{transform:rotate(-8deg) translateX(-6%) scale(.98,1.02)}45%{transform:rotate(14deg) translateX(11%) scale(1.06,.97)}100%{transform:rotate(9deg) translateX(7%)}}
+@keyframes pKick{0%{transform:rotate(7deg) translate(-3%,0)}45%{transform:rotate(-17deg) translate(11%,-7%) scale(1.04)}100%{transform:rotate(-12deg) translate(8%,-3%)}}
+@keyframes pCharge{0%{transform:rotate(-5deg) translateX(-3%) scale(1.02,.96)}55%{transform:rotate(-3deg) translateX(-2%) scale(1.04,.97)}100%{transform:rotate(5deg) translateX(3%) scale(1.03)}}
+@keyframes pWin{from{transform:translateY(0) scale(1)}to{transform:translateY(-8%) scale(1.04)}}
 .pick.rival{border-color:#FF5A4E;box-shadow:0 0 18px rgba(255,90,78,.6)}
 .badge.rv{background:#E3262E!important;color:#FFFFFF!important}
 .pick .pa img{height:100%;width:100%;object-fit:contain;object-position:50% 100%}
@@ -95,7 +101,7 @@ svg.rig{overflow:visible}
 @keyframes blinkT{50%{filter:brightness(.45)}}
 
 /* 三个按钮都放在奥特曼这一侧（左下角）：上面防御，下面出拳和光线；怪兽那边不放按钮 */
-.controls{position:absolute;left:0;bottom:0;z-index:8;display:grid;grid-template-areas:"shield ." "punch beam";align-items:end;justify-items:center;gap:10px 12px;
+.controls{position:absolute;left:0;bottom:0;z-index:8;display:grid;grid-template-areas:"shield ." "punch beam";align-items:end;justify-items:center;gap:14px 18px;
   padding-bottom:max(14px, calc(env(safe-area-inset-bottom, 0px) + 8px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 .cbtn{position:relative;width:clamp(78px,22vw,104px);height:clamp(78px,22vw,104px);border-radius:50%;border:3px solid rgba(255,255,255,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;
   font-family:var(--display);font-size:clamp(12px,3.2vw,15px);line-height:1;color:#FFFFFF;text-shadow:0 2px 0 rgba(0,0,0,.6);
@@ -107,7 +113,17 @@ svg.rig{overflow:visible}
 #bPunch{--glow:rgba(255,90,70,.55);background:radial-gradient(circle at 38% 26%,#FF9A8C,#D4222A 52%,#6E0A10)}
 #bShield{--glow:rgba(94,200,255,.55);background:radial-gradient(circle at 38% 26%,#B6ECFF,#2B7FD4 52%,#0B2E6B)}
 #bBeam{--glow:rgba(255,212,71,.6);background:radial-gradient(circle at 38% 26%,#FFF7C8,#EDA211 52%,#7A4300);width:clamp(92px,26vw,124px);height:clamp(92px,26vw,124px)}
-#bBeam[disabled]{filter:grayscale(.85) brightness(.6)}
+#bBeam[disabled]{background:radial-gradient(circle at 38% 26%,#B9BEC8,#6B7385 52%,#2B3040)}
+#bBeam[disabled] svg{filter:grayscale(.85) brightness(.75) drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+/* 能量环：绕着光线按钮一圈，攒多少亮多少 */
+#bBeam::after{content:"";position:absolute;inset:-9px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from -90deg,var(--ec,#5EDCFF) calc(var(--e,0)*360deg),rgba(255,255,255,.2) 0);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));
+  filter:drop-shadow(0 0 6px var(--ec,#5EDCFF))}
+.cbtn span.small{font-size:clamp(11px,2.8vw,13px)} .cbtn span.tiny{font-size:clamp(9px,2.3vw,11px);letter-spacing:-.03em}
+.cbtn span{white-space:nowrap}
+#bShield.alert{animation:alertS .32s ease-in-out infinite alternate}
+@keyframes alertS{from{transform:scale(1);box-shadow:inset 0 -9px 14px rgba(0,0,0,.42),inset 0 6px 10px rgba(255,255,255,.35),0 6px 0 rgba(0,0,0,.5),0 0 10px 2px rgba(255,60,48,.7)}to{transform:scale(1.14);box-shadow:inset 0 -9px 14px rgba(0,0,0,.42),inset 0 6px 10px rgba(255,255,255,.35),0 6px 0 rgba(0,0,0,.5),0 0 34px 12px rgba(255,60,48,.95)}}
 #bBeam.ready{animation:ready .7s ease-in-out infinite alternate}
 @keyframes ready{from{box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 10px #FFD447}to{box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 44px 10px #FFE066}}
 .cbtn[disabled]{cursor:default}
@@ -169,8 +185,9 @@ svg.rig{overflow:visible}
 #rotateTip{position:absolute;left:50%;top:22%;transform:translateX(-50%);z-index:7;font-size:14px;color:var(--muted);background:var(--panel);border-radius:999px;padding:6px 14px;white-space:nowrap}
 @media (orientation:landscape){#rotateTip{display:none}}
 @media (orientation:landscape){
-  .cbtn{width:clamp(64px,19vh,96px);height:clamp(64px,19vh,96px);opacity:.92}
-  #bBeam{width:clamp(76px,23vh,112px);height:clamp(76px,23vh,112px)}
+  .cbtn{width:clamp(76px,24vh,104px);height:clamp(76px,24vh,104px);opacity:.95}
+  #bBeam{width:clamp(88px,28vh,120px);height:clamp(88px,28vh,120px)}
+  .controls{gap:14px 18px}
 }
 .controls .rgt{display:contents}
 #bShield{grid-area:shield} #bPunch{grid-area:punch} #bBeam{grid-area:beam}
@@ -200,21 +217,20 @@ svg.rig{overflow:visible}
     <button class="cbtn" id="bShield" aria-label="防御">
       <svg viewBox="0 0 64 64" aria-hidden="true">
         <defs>
-          <linearGradient id="shA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4FBFF"/><stop offset=".35" stop-color="#9FD4F2"/><stop offset=".7" stop-color="#3F86C9"/><stop offset="1" stop-color="#143A78"/></linearGradient>
-          <linearGradient id="shB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EAF7FF"/><stop offset=".5" stop-color="#6FB6E8"/><stop offset="1" stop-color="#1C4F9A"/></linearGradient>
-          <linearGradient id="shRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#C9D1E0"/><stop offset="1" stop-color="#5E6A82"/></linearGradient>
-          <radialGradient id="shGem" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#7FE9FF"/><stop offset="1" stop-color="#0F7FC6"/></radialGradient>
-          <filter id="shGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>
+          <radialGradient id="lsA" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#E8FDFF" stop-opacity=".35"/><stop offset=".55" stop-color="#7FE3FF" stop-opacity=".25"/><stop offset=".8" stop-color="#9FEFFF" stop-opacity=".85"/><stop offset=".92" stop-color="#FFFFFF"/><stop offset="1" stop-color="#5EDCFF" stop-opacity="0"/></radialGradient>
+          <radialGradient id="lsC" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#BDF3FF" stop-opacity=".8"/><stop offset="1" stop-color="#5EDCFF" stop-opacity="0"/></radialGradient>
+          <filter id="lsG" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter>
         </defs>
-        <path d="M32 3 L57 11 V30 C57 46 46 57 32 62 C18 57 7 46 7 30 V11 Z" fill="#6FD8FF" opacity=".55" filter="url(#shGlow)"/>
-        <path d="M32 4 L56 12 V30 C56 45.5 45.5 56 32 61 C18.5 56 8 45.5 8 30 V12 Z" fill="url(#shRim)" stroke="#0D2A5C" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="M32 9 L51.5 15.5 V30 C51.5 42.5 43 51.5 32 55.8 C21 51.5 12.5 42.5 12.5 30 V15.5 Z" fill="url(#shA)"/>
-        <path d="M32 9 L51.5 15.5 V30 C51.5 42.5 43 51.5 32 55.8 Z" fill="url(#shB)" opacity=".55"/>
-        <path d="M32 9 V55.8 M12.5 27 H51.5" stroke="#FFFFFF" stroke-opacity=".45" stroke-width="1.4"/>
-        <path d="M15.5 17.5 L30 12.6 V24 H15.5 Z" fill="#FFFFFF" opacity=".38"/>
-        <circle cx="32" cy="27" r="8.5" fill="url(#shRim)" stroke="#0D2A5C" stroke-width="1.2"/>
-        <circle cx="32" cy="27" r="6" fill="url(#shGem)"/><ellipse cx="30" cy="24.6" rx="2.4" ry="1.5" fill="#FFFFFF"/>
-        <g fill="#C9D1E0" stroke="#0D2A5C" stroke-width=".7"><circle cx="16.5" cy="19" r="1.5"/><circle cx="47.5" cy="19" r="1.5"/><circle cx="19" cy="40" r="1.5"/><circle cx="45" cy="40" r="1.5"/></g>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#7FE3FF" stroke-width="5" opacity=".8" filter="url(#lsG)"/>
+        <circle cx="32" cy="32" r="29" fill="url(#lsA)"/>
+        <circle cx="32" cy="32" r="26.5" fill="none" stroke="#FFFFFF" stroke-width="2.2"/>
+        <circle cx="32" cy="32" r="19" fill="none" stroke="#DFF9FF" stroke-width="1.3" stroke-dasharray="5 3.5" opacity=".9"/>
+        <circle cx="32" cy="32" r="12" fill="none" stroke="#FFFFFF" stroke-width="1.2" opacity=".8"/>
+        <path d="M32 5.5 V58.5 M5.5 32 H58.5 M13.3 13.3 L50.7 50.7 M50.7 13.3 L13.3 50.7" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="1"/>
+        <path d="M32 13 L48.5 22.5 V41.5 L32 51 L15.5 41.5 V22.5 Z" fill="none" stroke="#BDF3FF" stroke-width="1.4" opacity=".9"/>
+        <circle cx="32" cy="32" r="9" fill="url(#lsC)"/>
+        <path d="M32 21 L34 30 L43 32 L34 34 L32 43 L30 34 L21 32 L30 30 Z" fill="#FFFFFF"/>
+        <path d="M11 22 A24 24 0 0 1 25 9.5" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".9"/>
       </svg><span>防御</span></button>
     <div class="rgt">
     <button class="cbtn" id="bBeam" aria-label="光线" disabled>
@@ -883,12 +899,13 @@ function monPoint(px,py){
   if(im&&im.naturalWidth){ const k=Math.min(r.width/im.naturalWidth,r.height/im.naturalHeight); w=im.naturalWidth*k; h=im.naturalHeight*k; x0=r.left+(r.width-w)/2; y0=r.bottom-h; }
   return {x:x0-s.left+(px/260)*w, y:y0-s.top+((py+10)/310)*h};
 }
+const USE_RIG=false; // 切胳膊切腿的做法接缝明显、动作不协调，停用；整张图一起做动作
 let heroBuilt='', curPose='stand';
 function setHero(pose){
   const p=IMG.h[save.hero]; heroEl.toggleAttribute('data-photo',!!p);
   const key=save.hero+'|'+timerRed;
   if(heroBuilt!==key){ heroBuilt=key;
-    $('#heroArt').innerHTML = p ? (p.rig?rigSVG(p):photoTag(p))
+    $('#heroArt').innerHTML = p ? ((p.rig&&USE_RIG)?rigSVG(p):photoTag(p))
       : ['stand','punch','guard','beam'].map(q=>`<div class="pl" data-p="${q}" hidden>${heroSVG(save.hero,{real:1,pose:q,noFx:1,timerRed})}</div>`).join('');
   }
   setPose(pose||'stand');
@@ -912,14 +929,51 @@ function beamOrigin(pose){
   return tip;
 }
 function moveCaption(text,col){ const d=document.createElement('div'); d.className='movecap'; d.textContent=text; d.style.color='#FFFFFF'; d.style.textShadow=`0 0 22px rgb(${col}),0 0 8px rgb(${col}),0 4px 0 rgba(0,0,0,.6)`; stage.appendChild(d); setTimeout(()=>d.remove(),2300); }
+// 光线按钮：图标按这位奥特曼自己的必杀技来画（十字 / L 字 / T 字 / 额头 / 光矛），颜色用他的光线颜色
+function beamIcon(mv){
+  const c=`rgb(${mv.col.join(',')})`, K=mv.kind, P=mv.pose;
+  const defs=`<defs><linearGradient id="biV" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7C8598"/><stop offset=".35" stop-color="#FFFFFF"/><stop offset=".7" stop-color="#C9D1E0"/><stop offset="1" stop-color="#6B7488"/></linearGradient>`+
+    `<linearGradient id="biH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#C9D1E0"/><stop offset="1" stop-color="#5E6A82"/></linearGradient>`+
+    `<linearGradient id="biRay" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient>`+
+    `<radialGradient id="biFl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".4" stop-color="${c}" stop-opacity=".85"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`+
+    `<filter id="biG" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="2.6"/></filter></defs>`;
+  const O='stroke="#1B2246" stroke-width="1.5"';
+  const armV=(x,y,h)=>`<rect x="${x}" y="${y}" width="12.5" height="${h}" rx="6.2" fill="url(#biV)" ${O}/><rect x="${x}" y="${y+h-9}" width="12.5" height="9" rx="3" fill="#D21F2B" stroke="#1B2246" stroke-width="1.2"/>`;
+  const armH=(x,y,w)=>`<rect x="${x}" y="${y}" width="${w}" height="12" rx="6" fill="url(#biH)" ${O}/><rect x="${x}" y="${y}" width="9" height="12" rx="3" fill="#D21F2B" stroke="#1B2246" stroke-width="1.2"/>`;
+  const ray=(x,y)=>K==='rainbow'
+    ? ['#FF4646','#FFA032','#FFEB50','#5AE678','#50AAFF','#AA6EFF'].map((q,i)=>`<path d="M${x} ${y-9+i*3} L66 ${y-15+i*5} V${y-10+i*5} L${x} ${y-6+i*3} Z" fill="${q}"/>`).join('')+`<path d="M${x} ${y-1.5} L66 ${y-2} V${y+2} L${x} ${y+1.5} Z" fill="#FFFFFF"/>`
+    : `<path d="M${x} ${y-8} L66 ${y-22} V${y+22} L${x} ${y+8} Z" fill="${c}" opacity=".75" filter="url(#biG)"/><path d="M${x} ${y-5} L66 ${y-15} V${y+15} L${x} ${y+5} Z" fill="url(#biRay)"/><path d="M${x} ${y-2} L66 ${y-6} V${y+6} L${x} ${y+2} Z" fill="#FFFFFF"/>`+
+      (K==='lightning'?`<path d="M${x+4} ${y-9} L${x+12} ${y-3} L${x+17} ${y-12} L${x+25} ${y-2} M${x+6} ${y+10} L${x+14} ${y+3} L${x+20} ${y+13}" fill="none" stroke="#FF2A3C" stroke-width="2.2" stroke-linejoin="round"/>`:'');
+  const flare=(x,y)=>`<circle cx="${x}" cy="${y}" r="12" fill="url(#biFl)"/><path d="M${x} ${y-14} L${x+2} ${y-2} L${x+14} ${y} L${x+2} ${y+2} L${x} ${y+14} L${x-2} ${y+2} L${x-14} ${y} L${x-2} ${y-2} Z" fill="#FFFFFF"/>`;
+  let g='';
+  if(P==='head'){
+    const hy=30;
+    g+=(K==='blade')
+      ? `<path d="M30 16 C40 6 46 26 54 14 S62 20 66 12" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round" opacity=".7" filter="url(#biG)"/><path d="M30 16 C40 6 46 26 54 14 S62 20 66 12" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round"/><path d="M30 16 C40 6 46 26 54 14 S62 20 66 12" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>`
+      : `<path d="M30 15 L66 6 V12 L30 19 Z" fill="${c}" opacity=".8" filter="url(#biG)"/><path d="M30 15.5 L66 8 V11 L30 18 Z" fill="${c}"/><path d="M30 16.3 L66 9 V10 L30 17.3 Z" fill="#FFFFFF"/>`;
+    g+=`<path d="M22 10 C33 10 38 20 38 ${hy} C38 44 32 54 22 56 C12 54 6 44 6 ${hy} C6 20 11 10 22 10 Z" fill="url(#biV)" ${O}/><path d="M21 3 L23 3 L24 22 L20 22 Z" fill="url(#biH)" ${O}/>`+
+       `<ellipse cx="14.5" cy="32" rx="5.5" ry="3.6" transform="rotate(18 14.5 32)" fill="#FFE98A" ${O}/><ellipse cx="29.5" cy="32" rx="5.5" ry="3.6" transform="rotate(-18 29.5 32)" fill="#FFE98A" ${O}/><path d="M18 45 Q22 47 26 45" fill="none" stroke="#5E6A82" stroke-width="1.6" stroke-linecap="round"/>`+flare(26,17).replace(/r="12"/,'r="8"');
+  }else if(P==='throw'){
+    g+=`<path d="M8 50 L56 12" stroke="${c}" stroke-width="10" stroke-linecap="round" opacity=".6" filter="url(#biG)"/><path d="M8 50 L50 17" stroke="${c}" stroke-width="5" stroke-linecap="round"/><path d="M8 50 L50 17" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/><path d="M46 12 L62 6 L56 22 Z" fill="#FFFFFF" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/>`+
+       `<path d="M14 40 q6 -8 10 2 M24 32 q6 -8 10 2 M34 24 q6 -8 10 2" fill="none" stroke="#FF5A5A" stroke-width="2" stroke-linecap="round"/><path d="M18 46 q6 -3 5 -9 M28 38 q6 -3 5 -9 M38 30 q6 -3 5 -9" fill="none" stroke="#5EA8FF" stroke-width="2" stroke-linecap="round"/>`;
+  }else if(P==='T'){
+    g+=ray(46,18)+armV(22,22,34)+armH(6,12,42)+flare(48,18);
+  }else if(P==='L'){
+    g+=ray(35,24)+armH(4,42,30)+armV(23,8,46)+flare(36,24);
+  }else{
+    g+=ray(33,27)+armH(3,33,34)+armV(22,9,44)+flare(34,27);
+  }
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${defs}${g}</svg>`;
+}
+function setBeamButton(){ const mv=MOVES[save.hero]||{name:'光线',pose:'cross',kind:'beam',col:[110,195,255]}; const b=$('#bBeam'); b.querySelector('svg').outerHTML=beamIcon(mv); const sp=b.querySelector('span'); sp.textContent=mv.name; sp.className=mv.name.length>6?'tiny':mv.name.length>4?'small':''; b.setAttribute('aria-label',mv.name); b.style.setProperty('--ec',`rgb(${mv.col.join(',')})`); }
 function setBars(){ $('#energy i').style.width=(energy*100)+'%'; $('#mhp i').style.width=(Math.max(0,hp)*100)+'%';
-  const b=$('#bBeam'); b.disabled=energy<1; b.classList.toggle('ready',energy>=1); }
+  const b=$('#bBeam'); b.disabled=energy<1; b.classList.toggle('ready',energy>=1); b.style.setProperty('--e',String(Math.min(1,energy))); }
 function startFight(mon){
   current=mon; inFight=true; hp=1; energy=0; beams=0; hits=0; timerRed=false; saidFull=false; saidDizzy=false; busy=true; warned=0;
   ['#title','#pickHero','#pickMonster','#book','#win'].forEach(s=>$(s).hidden=true);
   heroEl.style.opacity='0'; monEl.style.opacity='0'; monEl.className='actor'; heroEl.className='actor';
   $('#monArt').innerHTML=monArt(mon.id); setHero('stand');
-  $('#ctimer').classList.remove('red'); layout(); setBars();
+  $('#ctimer').classList.remove('red'); layout(); setBeamButton(); setBars(); $('#bShield').classList.remove('alert');
   $('#hud').hidden=false; $('#controls').hidden=true;
   warm(['mv_'+save.hero,'f_rival','f_go','f_good1','f_good2','f_warn','f_block','f_ouch','f_full','f_timer','f_beam','f_dizzy','f_win','f_absorb','f_n_'+mon.id,'f_i_'+mon.id]);
   // 变身：闪光 → 奥特曼从光里降落 → 怪兽从地下钻出来
@@ -937,6 +991,8 @@ function punch(){
   if(!inFight||busy) return; const now=Date.now(); if(now-punchAt<240) return; punchAt=now;
   sfx.punch(); heroEl.classList.remove('idle'); heroEl.style.transform=`translateX(${G.mx-G.hx-G.mw*.55-G.hw*.35}px)`;
   const act=(hits%3===2)?'kick':'punch'; setPose(act);
+  setTimeout(()=>{ if(!inFight) return; const kick=act==='kick', a=heroPoint(30,kick?170:100), b=monPoint(110,kick?190:130), n=kick?9:7;
+    for(let i=0;i<n;i++){ const off=(i-(n-1)/2)*(kick?5:4), dx=b.x-a.x, dy=b.y-a.y; emit({t:'spark',x:a.x,y:a.y+off,vx:dx/5,vy:dy/5+(kick?-1.2:0),life:0,max:6,col:kick?'rgba(255,220,120,.95)':'rgba(255,255,255,.95)'}); } },70);
   setTimeout(()=>{
     const p=monPoint(120+Math.random()*30,110+Math.random()*60); sparks(p.x,p.y); for(let i=0;i<6;i++) emit({t:'fire',x:p.x,y:p.y,vx:(Math.random()-.5)*3,vy:(Math.random()-.5)*3,r:8+Math.random()*10,life:0,max:16});
     sfx.impact(); shake=Math.max(shake,8); monEl.classList.remove('flinch'); void monEl.offsetWidth; monEl.classList.add('flinch');
@@ -948,7 +1004,7 @@ function punch(){
   setTimeout(()=>{ heroEl.style.transform=''; if(!busy){ heroEl.classList.add('idle'); if(curPose===act) setPose('stand'); } },260);
 }
 function addStars(){ const s=document.createElement('div'); s.className='stars'; s.id='dizzyStars'; s.textContent='★ ★ ★'; const p=monPoint(110,10); s.style.left=(p.x-40)+'px'; s.style.top=(p.y-40)+'px'; stage.appendChild(s); }
-function clearMarks(){ document.querySelectorAll('.warnmark,.stars,.shield').forEach(e=>e.remove()); }
+function clearMarks(){ document.querySelectorAll('.warnmark,.stars,.shield').forEach(e=>e.remove()); $('#bShield').classList.remove('alert'); }
 function shieldUp(){
   if(!inFight||busy) return; const now=Date.now(); if(now<shieldCool) return;
   shieldUntil=now+1300; shieldCool=now+1500; sfx.block(); setPose('guard');
@@ -959,7 +1015,7 @@ function shieldUp(){
 function scheduleAttack(ms){ clearTimeout(attackTimer); attackTimer=setTimeout(monsterAttack,ms||(5200+Math.random()*2400)); }
 function monsterAttack(){
   if(!inFight||busy||hp<=0) return;
-  monEl.classList.add('charge'); sfx.roar(); const mk=document.createElement('div'); mk.className='warnmark'; mk.textContent='!'; const p=monPoint(70,0); mk.style.left=(p.x-20)+'px'; mk.style.top=(p.y-60)+'px'; stage.appendChild(mk);
+  monEl.classList.add('charge'); $('#bShield').classList.add('alert'); sfx.roar(); const mk=document.createElement('div'); mk.className='warnmark'; mk.textContent='!'; const p=monPoint(70,0); mk.style.left=(p.x-20)+'px'; mk.style.top=(p.y-60)+'px'; stage.appendChild(mk);
   if(warned<2||Math.random()<.3){ say(['f_warn']); warned++; }
   setTimeout(()=>{
     mk.remove(); monEl.classList.remove('charge'); if(!inFight||busy) return;
@@ -968,6 +1024,7 @@ function monsterAttack(){
     emit(ball);
     setTimeout(()=>{
       if(!inFight) return;
+      $('#bShield').classList.remove('alert');
       if(Date.now()<shieldUntil){ sparks(b.x+G.hw*.2,b.y,'#BDF3FF',30); say(['f_block']); energy=Math.min(1,energy+.15); setBars(); if(energy>=1&&!saidFull){ saidFull=true; setTimeout(()=>say(['f_full']),1200); } }
       else { explode(b.x,b.y,.6); sfx.boom(); shake=20; heroEl.classList.remove('hurt'); void heroEl.offsetWidth; heroEl.classList.add('hurt'); setRed(); say(['f_ouch']); }
       scheduleAttack();
