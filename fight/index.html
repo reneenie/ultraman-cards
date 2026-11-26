@@ -92,7 +92,10 @@ svg.rig{overflow:visible}
 .bar{flex:1;min-width:0;display:flex;align-items:center;gap:6px}
 .bar .track{flex:1;height:16px;border-radius:9px;background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.5);overflow:hidden}
 .bar i{display:block;height:100%;width:0;transition:width .25s}
-#energy i{background:linear-gradient(90deg,#1E7BFF,#5EDCFF,#E8FDFF);box-shadow:0 0 12px #5EDCFF}
+#hhp i{background:linear-gradient(90deg,#1FA75A,#5EE08F,#D9FFE6);box-shadow:0 0 12px #5EE08F;transition:width .3s,background .3s}
+#hhp.low i{background:linear-gradient(90deg,#B01208,#FF5A4E);box-shadow:0 0 12px #FF3B30}
+#hhp svg{width:22px;height:22px;flex-shrink:0}
+#ctimer.off{background:radial-gradient(circle at 38% 32%,#6B7385,#2B3040);box-shadow:none;animation:none}
 #mhp i{background:linear-gradient(90deg,#FFB03B,#FF3B30);margin-left:auto}
 #mhp .track{display:flex}
 .bar .ic{font-size:20px;flex-shrink:0}
@@ -208,7 +211,7 @@ svg.rig{overflow:visible}
   <div class="bars" style="position:absolute;inset:0;pointer-events:none"></div>
   <div class="hud" id="hud" hidden>
     <button class="hbtn" id="homeBtn" aria-label="返回"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z" fill="#FFFFFF"/></svg></button>
-    <div class="bar" id="energy"><span class="ic">⚡</span><div class="track"><i></i></div></div>
+    <div class="bar" id="hhp" aria-label="奥特曼的血"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 C5 15 2 11.5 2 7.8 C2 4.8 4.3 3 6.8 3 C8.8 3 10.6 4 12 6 C13.4 4 15.2 3 17.2 3 C19.7 3 22 4.8 22 7.8 C22 11.5 19 15 12 21 Z" fill="#FF4A4A" stroke="#FFFFFF" stroke-width="1.6"/></svg><div class="track"><i></i></div></div>
     <div id="ctimer" aria-label="彩色计时器"></div>
     <div class="bar" id="mhp"><div class="track"><i></i></div><span class="ic">👾</span></div>
   </div>
@@ -304,6 +307,13 @@ svg.rig{overflow:visible}
   <button class="big alt" id="bookBack" style="height:64px;font-size:24px;padding:0 30px">返回</button>
 </div>
 
+<div id="lose" class="layer" hidden>
+  <div class="ttl" style="font-size:clamp(34px,9vw,56px);text-shadow:0 0 24px rgba(255,90,78,.8),0 6px 0 #3A0A08">能量用完了</div>
+  <div class="wname" id="loseName" style="font-size:clamp(20px,5.4vw,30px)"></div>
+  <div class="wintro" style="text-align:center">这次没有打败怪兽，图鉴里不会有它。<br>重新选一次，再来挑战！</div>
+  <button class="big" id="retryBtn">重新选择</button>
+</div>
+
 <div id="win" class="layer" hidden>
   <div class="winwrap">
     <div class="wincard"><div class="in" id="winArt"></div></div>
@@ -324,8 +334,8 @@ svg.rig{overflow:visible}
 const $=s=>document.querySelector(s);
 const O='#141B3D'; let UID=0; const f1=n=>Math.round(n*10)/10;
 const MONSTERS=[{"id": "gomora", "name": "哥莫拉", "intro": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "hp": 12}, {"id": "eleking", "name": "艾雷王", "intro": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "hp": 12}, {"id": "redking", "name": "雷德王", "intro": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "hp": 14}, {"id": "baltan", "name": "巴尔坦星人", "intro": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "hp": 14}, {"id": "kingjoe", "name": "金古桥", "intro": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "hp": 16}, {"id": "zetton", "name": "杰顿", "intro": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "hp": 16}];
-const AUDIO={"f_hello": "../audio/f_hello.mp3", "f_pickHero": "../audio/f_pickHero.mp3", "f_pickMonster": "../audio/f_pickMonster.mp3", "f_locked": "../audio/f_locked.mp3", "f_henshin": "../audio/f_henshin.mp3", "f_go": "../audio/f_go.mp3", "f_good1": "../audio/f_good1.mp3", "f_good2": "../audio/f_good2.mp3", "f_warn": "../audio/f_warn.mp3", "f_block": "../audio/f_block.mp3", "f_ouch": "../audio/f_ouch.mp3", "f_full": "../audio/f_full.mp3", "f_timer": "../audio/f_timer.mp3", "f_beam": "../audio/f_beam.mp3", "f_absorb": "../audio/f_absorb.mp3", "f_dizzy": "../audio/f_dizzy.mp3", "f_win": "../audio/f_win.mp3", "f_new": "../audio/f_new.mp3", "f_book": "../audio/f_book.mp3", "f_allwin": "../audio/f_allwin.mp3", "f_rival": "../audio/f_rival.mp3", "f_n_gomora": "../audio/f_n_gomora.mp3", "f_i_gomora": "../audio/f_i_gomora.mp3", "f_n_eleking": "../audio/f_n_eleking.mp3", "f_i_eleking": "../audio/f_i_eleking.mp3", "f_n_redking": "../audio/f_n_redking.mp3", "f_i_redking": "../audio/f_i_redking.mp3", "f_n_baltan": "../audio/f_n_baltan.mp3", "f_i_baltan": "../audio/f_i_baltan.mp3", "f_n_kingjoe": "../audio/f_n_kingjoe.mp3", "f_i_kingjoe": "../audio/f_i_kingjoe.mp3", "f_n_zetton": "../audio/f_n_zetton.mp3", "f_i_zetton": "../audio/f_i_zetton.mp3", "mv_orig": "../audio/mv_orig.mp3", "mv_seven": "../audio/mv_seven.mp3", "mv_taro": "../audio/mv_taro.mp3", "mv_tiga": "../audio/mv_tiga.mp3", "mv_dyna": "../audio/mv_dyna.mp3", "mv_gaia": "../audio/mv_gaia.mp3", "mv_nexus": "../audio/mv_nexus.mp3", "mv_mebius": "../audio/mv_mebius.mp3", "mv_zero": "../audio/mv_zero.mp3", "mv_ginga": "../audio/mv_ginga.mp3", "mv_orb": "../audio/mv_orb.mp3", "mv_geed": "../audio/mv_geed.mp3", "mv_zeta": "../audio/mv_zeta.mp3", "mv_trigger": "../audio/mv_trigger.mp3", "mv_decker": "../audio/mv_decker.mp3", "mv_blazar": "../audio/mv_blazar.mp3", "mv_arc": "../audio/mv_arc.mp3", "n_orig": "../audio/n_orig.mp3", "n_seven": "../audio/n_seven.mp3", "n_taro": "../audio/n_taro.mp3", "n_tiga": "../audio/n_tiga.mp3", "n_dyna": "../audio/n_dyna.mp3", "n_gaia": "../audio/n_gaia.mp3", "n_nexus": "../audio/n_nexus.mp3", "n_mebius": "../audio/n_mebius.mp3", "n_zero": "../audio/n_zero.mp3", "n_ginga": "../audio/n_ginga.mp3", "n_orb": "../audio/n_orb.mp3", "n_geed": "../audio/n_geed.mp3", "n_zeta": "../audio/n_zeta.mp3", "n_trigger": "../audio/n_trigger.mp3", "n_decker": "../audio/n_decker.mp3", "n_blazar": "../audio/n_blazar.mp3", "n_arc": "../audio/n_arc.mp3"};
-const TEXT={"f_hello": "小朋友，我们一起变身奥特曼，去打怪兽吧！", "f_pickHero": "你想变成哪一位奥特曼？点一点他！", "f_pickMonster": "怪兽出现了！选一只怪兽去打败它！", "f_locked": "先打败前面的怪兽，这只才会出现哦！", "f_henshin": "变身！", "f_go": "点怪兽出拳，打败它！", "f_good1": "打得好！", "f_good2": "再来一拳！", "f_warn": "怪兽要攻击了！快按盾牌！", "f_block": "挡住啦！好厉害！", "f_ouch": "哎哟！没关系，站起来继续战斗！", "f_full": "能量满啦！快按光线按钮！", "f_timer": "胸口的计时器在闪了！快用必杀技！", "f_beam": "必杀光线！", "f_absorb": "什么？杰顿把光线吸收了！继续出拳，再来一次！", "f_dizzy": "怪兽晕倒啦！快用光线！", "f_win": "胜利！怪兽变成小小的，回宇宙去啦！", "f_new": "新的怪兽出现了！", "f_book": "这是怪兽图鉴，点一点，听听怪兽的故事。", "f_allwin": "太厉害了！所有怪兽都打败啦！", "f_rival": "宿敌登场！", "f_n_gomora": "哥莫拉！", "f_i_gomora": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "f_n_eleking": "艾雷王！", "f_i_eleking": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "f_n_redking": "雷德王！", "f_i_redking": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "f_n_baltan": "巴尔坦星人！", "f_i_baltan": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "f_n_kingjoe": "金古桥！", "f_i_kingjoe": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "f_n_zetton": "杰顿！", "f_i_zetton": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "mv_orig": "斯派修姆光线！", "mv_seven": "艾梅利姆光线！", "mv_taro": "斯特利姆光线！", "mv_tiga": "哉佩利敖光线！", "mv_dyna": "索尔捷特光线！", "mv_gaia": "光子冰刀！", "mv_nexus": "终极光线！", "mv_mebius": "梦比姆光线！", "mv_zero": "赛罗集束光线！", "mv_ginga": "银河十字光线！", "mv_orb": "欧利吉姆光线！", "mv_geed": "毁灭爆裂！", "mv_zeta": "泽斯蒂姆光线！", "mv_trigger": "哉佩利敖光线！", "mv_decker": "赛尔捷特光线！", "mv_blazar": "螺旋光矛！", "mv_arc": "亚刻最终升华光线！", "n_orig": "初代奥特曼！", "n_seven": "赛文奥特曼！", "n_taro": "泰罗奥特曼！", "n_tiga": "迪迦奥特曼！", "n_dyna": "戴拿奥特曼！", "n_gaia": "盖亚奥特曼！", "n_nexus": "奈克瑟斯奥特曼！", "n_mebius": "梦比优斯奥特曼！", "n_zero": "赛罗奥特曼！", "n_ginga": "银河奥特曼！", "n_orb": "欧布奥特曼！", "n_geed": "捷德奥特曼！", "n_zeta": "泽塔奥特曼！", "n_trigger": "特利迦奥特曼！", "n_decker": "德凯奥特曼！", "n_blazar": "布莱泽奥特曼！", "n_arc": "亚刻奥特曼！"};
+const AUDIO={"f_hello": "../audio/f_hello.mp3", "f_pickHero": "../audio/f_pickHero.mp3", "f_pickMonster": "../audio/f_pickMonster.mp3", "f_locked": "../audio/f_locked.mp3", "f_henshin": "../audio/f_henshin.mp3", "f_go": "../audio/f_go.mp3", "f_good1": "../audio/f_good1.mp3", "f_good2": "../audio/f_good2.mp3", "f_warn": "../audio/f_warn.mp3", "f_block": "../audio/f_block.mp3", "f_ouch": "../audio/f_ouch.mp3", "f_full": "../audio/f_full.mp3", "f_timer": "../audio/f_timer.mp3", "f_beam": "../audio/f_beam.mp3", "f_absorb": "../audio/f_absorb.mp3", "f_dizzy": "../audio/f_dizzy.mp3", "f_win": "../audio/f_win.mp3", "f_new": "../audio/f_new.mp3", "f_book": "../audio/f_book.mp3", "f_allwin": "../audio/f_allwin.mp3", "f_rival": "../audio/f_rival.mp3", "f_lose": "../audio/f_lose.mp3", "f_n_gomora": "../audio/f_n_gomora.mp3", "f_i_gomora": "../audio/f_i_gomora.mp3", "f_n_eleking": "../audio/f_n_eleking.mp3", "f_i_eleking": "../audio/f_i_eleking.mp3", "f_n_redking": "../audio/f_n_redking.mp3", "f_i_redking": "../audio/f_i_redking.mp3", "f_n_baltan": "../audio/f_n_baltan.mp3", "f_i_baltan": "../audio/f_i_baltan.mp3", "f_n_kingjoe": "../audio/f_n_kingjoe.mp3", "f_i_kingjoe": "../audio/f_i_kingjoe.mp3", "f_n_zetton": "../audio/f_n_zetton.mp3", "f_i_zetton": "../audio/f_i_zetton.mp3", "mv_orig": "../audio/mv_orig.mp3", "mv_seven": "../audio/mv_seven.mp3", "mv_taro": "../audio/mv_taro.mp3", "mv_tiga": "../audio/mv_tiga.mp3", "mv_dyna": "../audio/mv_dyna.mp3", "mv_gaia": "../audio/mv_gaia.mp3", "mv_nexus": "../audio/mv_nexus.mp3", "mv_mebius": "../audio/mv_mebius.mp3", "mv_zero": "../audio/mv_zero.mp3", "mv_ginga": "../audio/mv_ginga.mp3", "mv_orb": "../audio/mv_orb.mp3", "mv_geed": "../audio/mv_geed.mp3", "mv_zeta": "../audio/mv_zeta.mp3", "mv_trigger": "../audio/mv_trigger.mp3", "mv_decker": "../audio/mv_decker.mp3", "mv_blazar": "../audio/mv_blazar.mp3", "mv_arc": "../audio/mv_arc.mp3", "n_orig": "../audio/n_orig.mp3", "n_seven": "../audio/n_seven.mp3", "n_taro": "../audio/n_taro.mp3", "n_tiga": "../audio/n_tiga.mp3", "n_dyna": "../audio/n_dyna.mp3", "n_gaia": "../audio/n_gaia.mp3", "n_nexus": "../audio/n_nexus.mp3", "n_mebius": "../audio/n_mebius.mp3", "n_zero": "../audio/n_zero.mp3", "n_ginga": "../audio/n_ginga.mp3", "n_orb": "../audio/n_orb.mp3", "n_geed": "../audio/n_geed.mp3", "n_zeta": "../audio/n_zeta.mp3", "n_trigger": "../audio/n_trigger.mp3", "n_decker": "../audio/n_decker.mp3", "n_blazar": "../audio/n_blazar.mp3", "n_arc": "../audio/n_arc.mp3"};
+const TEXT={"f_hello": "小朋友，我们一起变身奥特曼，去打怪兽吧！", "f_pickHero": "你想变成哪一位奥特曼？点一点他！", "f_pickMonster": "怪兽出现了！选一只怪兽去打败它！", "f_locked": "先打败前面的怪兽，这只才会出现哦！", "f_henshin": "变身！", "f_go": "点怪兽出拳，打败它！", "f_good1": "打得好！", "f_good2": "再来一拳！", "f_warn": "怪兽要攻击了！快按盾牌！", "f_block": "挡住啦！好厉害！", "f_ouch": "哎哟！没关系，站起来继续战斗！", "f_full": "能量满啦！快按光线按钮！", "f_timer": "胸口的计时器在闪了！快用必杀技！", "f_beam": "必杀光线！", "f_absorb": "什么？杰顿把光线吸收了！继续出拳，再来一次！", "f_dizzy": "怪兽晕倒啦！快用光线！", "f_win": "胜利！怪兽变成小小的，回宇宙去啦！", "f_new": "新的怪兽出现了！", "f_book": "这是怪兽图鉴，点一点，听听怪兽的故事。", "f_allwin": "太厉害了！所有怪兽都打败啦！", "f_rival": "宿敌登场！", "f_lose": "奥特曼的能量用完了！这次没有打败怪兽。重新选一次，再来挑战吧！", "f_n_gomora": "哥莫拉！", "f_i_gomora": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "f_n_eleking": "艾雷王！", "f_i_eleking": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "f_n_redking": "雷德王！", "f_i_redking": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "f_n_baltan": "巴尔坦星人！", "f_i_baltan": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "f_n_kingjoe": "金古桥！", "f_i_kingjoe": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "f_n_zetton": "杰顿！", "f_i_zetton": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "mv_orig": "斯派修姆光线！", "mv_seven": "艾梅利姆光线！", "mv_taro": "斯特利姆光线！", "mv_tiga": "哉佩利敖光线！", "mv_dyna": "索尔捷特光线！", "mv_gaia": "光子冰刀！", "mv_nexus": "终极光线！", "mv_mebius": "梦比姆光线！", "mv_zero": "赛罗集束光线！", "mv_ginga": "银河十字光线！", "mv_orb": "欧利吉姆光线！", "mv_geed": "毁灭爆裂！", "mv_zeta": "泽斯蒂姆光线！", "mv_trigger": "哉佩利敖光线！", "mv_decker": "赛尔捷特光线！", "mv_blazar": "螺旋光矛！", "mv_arc": "亚刻最终升华光线！", "n_orig": "初代奥特曼！", "n_seven": "赛文奥特曼！", "n_taro": "泰罗奥特曼！", "n_tiga": "迪迦奥特曼！", "n_dyna": "戴拿奥特曼！", "n_gaia": "盖亚奥特曼！", "n_nexus": "奈克瑟斯奥特曼！", "n_mebius": "梦比优斯奥特曼！", "n_zero": "赛罗奥特曼！", "n_ginga": "银河奥特曼！", "n_orb": "欧布奥特曼！", "n_geed": "捷德奥特曼！", "n_zeta": "泽塔奥特曼！", "n_trigger": "特利迦奥特曼！", "n_decker": "德凯奥特曼！", "n_blazar": "布莱泽奥特曼！", "n_arc": "亚刻奥特曼！"};
 const IMG={"h": {}, "m": {}};
 /* ---------- 奥特曼外观配置 ---------- */
 const C={R:'#D21F2B',DR:'#A3121C',B:'#2456C8',BL:'#3E9BE8',P:'#6A39B4',K:'#2B2F3B',G:'#E1B23F',S:'#D8DDE6',O:'#EC7A2F',GR:'#8B93A5',T:'#1FA7A0'};
@@ -891,7 +901,8 @@ let gt=0;
 function grainLoop(){ gt++; if(gt%3===0&&grain.width>0&&grain.height>0){ const w=grain.width,h=grain.height,img=gctx.createImageData(w,h),d=img.data; for(let i=0;i<d.length;i+=4){ const v=Math.random()*255; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; } gctx.putImageData(img,0,0); } requestAnimationFrame(grainLoop); }
 
 /* ---------- 战斗 ---------- */
-let current=null, inFight=false, hp=1, energy=0, attackTimer=null, shieldUntil=0, shieldCool=0, timerRed=false, beepTimer=null, punchAt=0, beams=0, fightStart=0, hits=0, saidFull=false, saidDizzy=false, busy=false, warned=0;
+const HERO_HITS=3; // 奥特曼被打中 3 次就失败
+let heroHp=1, current=null, inFight=false, hp=1, energy=0, attackTimer=null, shieldUntil=0, shieldCool=0, timerRed=false, beepTimer=null, punchAt=0, beams=0, fightStart=0, hits=0, saidFull=false, saidDizzy=false, busy=false, warned=0;
 function heroPoint(px,py){ const r=heroEl.getBoundingClientRect(), s=stage.getBoundingClientRect(); const ph=heroEl.hasAttribute('data-photo'); return {x:r.left-s.left+(ph?(200-px)/200:(1-px/200))*r.width, y:r.top-s.top+((py+8)/270)*r.height}; }
 function monPoint(px,py){
   const r=monEl.getBoundingClientRect(), s=stage.getBoundingClientRect(), im=monEl.querySelector('img.photo');
@@ -966,16 +977,16 @@ function beamIcon(mv){
   return `<svg viewBox="0 0 64 64" aria-hidden="true">${defs}${g}</svg>`;
 }
 function setBeamButton(){ const mv=MOVES[save.hero]||{name:'光线',pose:'cross',kind:'beam',col:[110,195,255]}; const b=$('#bBeam'); b.querySelector('svg').outerHTML=beamIcon(mv); const sp=b.querySelector('span'); sp.textContent=mv.name; sp.className=mv.name.length>6?'tiny':mv.name.length>4?'small':''; b.setAttribute('aria-label',mv.name); b.style.setProperty('--ec',`rgb(${mv.col.join(',')})`); }
-function setBars(){ $('#energy i').style.width=(energy*100)+'%'; $('#mhp i').style.width=(Math.max(0,hp)*100)+'%';
+function setBars(){ $('#hhp i').style.width=(Math.max(0,heroHp)*100)+'%'; $('#hhp').classList.toggle('low',heroHp<=.34); $('#mhp i').style.width=(Math.max(0,hp)*100)+'%';
   const b=$('#bBeam'); b.disabled=energy<1; b.classList.toggle('ready',energy>=1); b.style.setProperty('--e',String(Math.min(1,energy))); }
 function startFight(mon){
-  current=mon; inFight=true; hp=1; energy=0; beams=0; hits=0; timerRed=false; saidFull=false; saidDizzy=false; busy=true; warned=0;
-  ['#title','#pickHero','#pickMonster','#book','#win'].forEach(s=>$(s).hidden=true);
+  current=mon; inFight=true; hp=1; heroHp=1; energy=0; beams=0; hits=0; timerRed=false; saidFull=false; saidDizzy=false; busy=true; warned=0;
+  ['#title','#pickHero','#pickMonster','#book','#win','#lose'].forEach(s=>$(s).hidden=true); $('#ctimer').classList.remove('off');
   heroEl.style.opacity='0'; monEl.style.opacity='0'; monEl.className='actor'; heroEl.className='actor';
   $('#monArt').innerHTML=monArt(mon.id); setHero('stand');
   $('#ctimer').classList.remove('red'); layout(); setBeamButton(); setBars(); $('#bShield').classList.remove('alert');
   $('#hud').hidden=false; $('#controls').hidden=true;
-  warm(['mv_'+save.hero,'f_rival','f_go','f_good1','f_good2','f_warn','f_block','f_ouch','f_full','f_timer','f_beam','f_dizzy','f_win','f_absorb','f_n_'+mon.id,'f_i_'+mon.id]);
+  warm(['mv_'+save.hero,'f_lose','f_rival','f_go','f_good1','f_good2','f_warn','f_block','f_ouch','f_full','f_timer','f_beam','f_dizzy','f_win','f_absorb','f_n_'+mon.id,'f_i_'+mon.id]);
   // 变身：闪光 → 奥特曼从光里降落 → 怪兽从地下钻出来
   say(['f_henshin']); sfx.henshin();
   const c=heroPoint(100,120); for(let i=0;i<60;i++){ const a=Math.random()*6.28,v=2+Math.random()*10; emit({t:'spark',x:c.x,y:c.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:0,max:30,col:'#E8FDFF'}); }
@@ -1026,7 +1037,10 @@ function monsterAttack(){
       if(!inFight) return;
       $('#bShield').classList.remove('alert');
       if(Date.now()<shieldUntil){ sparks(b.x+G.hw*.2,b.y,'#BDF3FF',30); say(['f_block']); energy=Math.min(1,energy+.15); setBars(); if(energy>=1&&!saidFull){ saidFull=true; setTimeout(()=>say(['f_full']),1200); } }
-      else { explode(b.x,b.y,.6); sfx.boom(); shake=20; heroEl.classList.remove('hurt'); void heroEl.offsetWidth; heroEl.classList.add('hurt'); setRed(); say(['f_ouch']); }
+      else { explode(b.x,b.y,.6); sfx.boom(); shake=20; heroEl.classList.remove('hurt'); void heroEl.offsetWidth; heroEl.classList.add('hurt');
+        heroHp=Math.max(0,heroHp-1/HERO_HITS); setBars();
+        if(heroHp<=.001){ defeat(); return; }
+        if(heroHp<=.34) setRed(); else say(['f_ouch']); }
       scheduleAttack();
     },steps*16+40);
   },1700);
@@ -1074,16 +1088,27 @@ function victory(b){
     monEl.style.transition=''; monEl.style.transform='';
   },3200);
 }
-function leaveFight(){ inFight=false; busy=false; clearTimeout(attackTimer); clearInterval(beepTimer); clearMarks(); beamFx=null; slow=1; $('#hud').hidden=true; $('#controls').hidden=true; $('#rotateTip').hidden=true; stopVoice(); }
+// 奥特曼的血条清空：失败，不记图鉴，回去重新选择
+function defeat(){
+  inFight=false; busy=true; clearTimeout(attackTimer); clearInterval(beepTimer); clearMarks(); beamFx=null; slow=1; stopVoice();
+  $('#controls').hidden=true; $('#ctimer').classList.remove('red'); $('#ctimer').classList.add('off');
+  heroEl.classList.remove('idle','hurt'); setPose('stand');
+  [520,400,300,220,150].forEach((f,i)=>tone(f,i*.16,.3,'triangle',.2));
+  heroEl.style.transition='transform 1s cubic-bezier(.5,0,.8,.4),filter 1s'; heroEl.style.transform='rotate(-82deg) translate(-18%,6%)'; heroEl.style.filter='grayscale(.8) brightness(.6)';
+  setTimeout(()=>{ sfx.stomp(); shake=16; dust(G.hx-G.hw*.4,G.groundY,G.hw*1.2); },950);
+  setTimeout(()=>{ heroEl.style.transition=''; heroEl.style.transform=''; heroEl.style.filter='';
+    $('#hud').hidden=true; $('#rotateTip').hidden=true; $('#loseName').textContent=current.name+' 还没有被打败'; $('#lose').hidden=false; say(['f_lose']); },2300);
+}
+function leaveFight(){ heroEl.style.transition=''; heroEl.style.transform=''; heroEl.style.filter=''; inFight=false; busy=false; clearTimeout(attackTimer); clearInterval(beepTimer); clearMarks(); beamFx=null; slow=1; $('#hud').hidden=true; $('#controls').hidden=true; $('#rotateTip').hidden=true; stopVoice(); }
 
 /* ---------- 选人、选怪兽、图鉴 ---------- */
 function showHeroPick(){
-  leaveFight(); ['#title','#pickMonster','#book','#win'].forEach(s=>$(s).hidden=true);
+  leaveFight(); ['#title','#pickMonster','#book','#win','#lose'].forEach(s=>$(s).hidden=true);
   $('#heroGrid').innerHTML=HEROES.map(([id,n])=>`<button class="pick${id===save.hero?' on':''}" data-h="${id}"><div class="pa">${heroArt(id,{real:1,pose:'stand'})}</div><div class="pn">${n}</div></button>`).join('');
   $('#pickHero').hidden=false; say(['f_pickHero']);
 }
 function showMonPick(){
-  leaveFight(); ['#title','#pickHero','#book','#win'].forEach(s=>$(s).hidden=true);
+  leaveFight(); ['#title','#pickHero','#book','#win','#lose'].forEach(s=>$(s).hidden=true);
   const n=unlockedCount();
   const rv=RIVAL[save.hero]; const list=[...MONSTERS].sort((a,b)=>(b.id===rv)-(a.id===rv));
   $('#monGrid').innerHTML=list.map(m=>{ const i=MONSTERS.indexOf(m), isR=m.id===rv, lock=i>=n&&!isR; return `<button class="pick${lock?' locked':''}${isR?' rival':''}" data-m="${m.id}" data-lock="${lock?1:''}"><div class="pa">${monArt(m.id)}</div><div class="pn">${lock?'？？？':m.name}</div>${isR?'<span class="badge rv">宿敌</span>':save.beaten[m.id]?'<span class="badge">打败过</span>':''}${lock?'<div class="q">?</div>':''}</button>`; }).join('');
@@ -1100,6 +1125,7 @@ $('#bookGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-b]'
 $('#toHero').addEventListener('click',()=>{ sfx.tap(); showHeroPick(); });
 $('#toBook').addEventListener('click',()=>{ sfx.tap(); showBook(); });
 $('#bookBack').addEventListener('click',()=>{ sfx.tap(); showMonPick(); });
+$('#retryBtn').addEventListener('click',()=>{ sfx.tap(); showHeroPick(); });
 $('#againBtn').addEventListener('click',()=>{ sfx.tap(); showMonPick(); });
 $('#winBook').addEventListener('click',()=>{ sfx.tap(); showBook(); });
 $('#homeBtn').addEventListener('click',()=>{ sfx.tap(); showMonPick(); });
@@ -1125,6 +1151,7 @@ $('#startBtn').addEventListener('click',()=>{
 })();
 addEventListener('resize',()=>layout());
 layout(); requestAnimationFrame(loop); if(!reduce) requestAnimationFrame(grainLoop);
+window.__defeatTest=()=>{ heroHp=1/HERO_HITS; };
 window.__fight={startFight,MONSTERS,save,punch,fireBeam,shieldUp,monsterAttack,setPose,rigSVG,applyRig,IMG,heroSVG};
 })();
 </script>
