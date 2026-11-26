@@ -94,7 +94,8 @@ svg.rig{overflow:visible}
 #ctimer.red{background:radial-gradient(circle at 38% 32%,#FFE1DE,#FF5A4E 45%,#B01208);box-shadow:0 0 22px #FF3B30;animation:blinkT .5s steps(2) infinite}
 @keyframes blinkT{50%{filter:brightness(.45)}}
 
-.controls{position:absolute;left:0;right:0;bottom:0;z-index:8;display:flex;justify-content:center;align-items:flex-end;gap:clamp(14px,5vw,40px);
+/* 三个按钮都放在奥特曼这一侧（左下角）：上面防御，下面出拳和光线；怪兽那边不放按钮 */
+.controls{position:absolute;left:0;bottom:0;z-index:8;display:grid;grid-template-areas:"shield ." "punch beam";align-items:end;justify-items:center;gap:10px 12px;
   padding-bottom:max(14px, calc(env(safe-area-inset-bottom, 0px) + 8px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 .cbtn{width:clamp(78px,22vw,104px);height:clamp(78px,22vw,104px);border-radius:50%;border:4px solid rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   font-family:var(--display);font-size:clamp(15px,4vw,19px);color:#FFFFFF;text-shadow:0 2px 0 rgba(0,0,0,.5);box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 20px rgba(0,0,0,.4)}
@@ -165,12 +166,11 @@ svg.rig{overflow:visible}
 #rotateTip{position:absolute;left:50%;top:22%;transform:translateX(-50%);z-index:7;font-size:14px;color:var(--muted);background:var(--panel);border-radius:999px;padding:6px 14px;white-space:nowrap}
 @media (orientation:landscape){#rotateTip{display:none}}
 @media (orientation:landscape){
-  .controls{justify-content:space-between;align-items:flex-end}
-  .controls .rgt{display:flex;gap:14px;align-items:flex-end}
   .cbtn{width:clamp(64px,19vh,96px);height:clamp(64px,19vh,96px);opacity:.92}
   #bBeam{width:clamp(76px,23vh,112px);height:clamp(76px,23vh,112px)}
 }
-@media (orientation:portrait){.controls .rgt{display:contents}}
+.controls .rgt{display:contents}
+#bShield{grid-area:shield} #bPunch{grid-area:punch} #bBeam{grid-area:beam}
 @media (prefers-reduced-motion: reduce){#hero.idle .flip,#monster.idle .mbody,#bBeam.ready,#ctimer.red{animation:none}}
 </style>
 </head>
@@ -698,12 +698,12 @@ function layout(){
   bctx.setTransform(DPR,0,0,DPR,0,0); ctx.setTransform(DPR,0,0,DPR,0,0);
   grain.width=Math.ceil(W/3); grain.height=Math.ceil(H/3);
   const portrait=H>W;
-  const groundY=portrait?H*0.80:H*0.90;
+  const groundY=portrait?H*0.73:H*0.90;
   let hh=Math.min(groundY*0.74, W*(portrait?0.46:0.30)/0.74);
   const big=current&&current.id==='zetton'?1.14:1.06;
   let mh=hh*big;
   const hw=hh*0.74, mw=mh*0.84;
-  const hx=W*(portrait?0.26:0.30), mx=W*(portrait?0.74:0.70);
+  const hx=W*(portrait?0.27:0.36), mx=W*(portrait?0.74:0.72);
   G={groundY,hh,hw,mh,mw,hx,mx,portrait};
   Object.assign(heroEl.style,{width:hw+'px',height:hh+'px',left:(hx-hw/2)+'px',top:(groundY-hh)+'px'});
   Object.assign(monEl.style,{width:mw+'px',height:mh+'px',left:(mx-mw/2)+'px',top:(groundY-mh)+'px'});
