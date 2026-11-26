@@ -127,6 +127,11 @@ svg.rig{overflow:visible}
   #heroGrid{grid-template-columns:repeat(6,minmax(0,1fr));width:min(100%,960px)}
   .pick .pa{aspect-ratio:1/1;max-height:20vh}
   .layer .ttl{font-size:clamp(24px,7vh,44px)!important}
+  #title .ttl{font-size:clamp(30px,11vh,58px)!important}
+  #title .ttl br{display:none}
+  #titleArt{height:48vh!important}
+  #title .sub{display:none}
+  #startBtn{height:62px;font-size:28px}
   .layer{gap:10px}
 }
 .pick{position:relative;border:3px solid rgba(255,255,255,.35);border-radius:18px;background:radial-gradient(ellipse at 50% 40%,#3B4590,#121636 75%);padding:8px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;overflow:hidden}
@@ -198,7 +203,7 @@ svg.rig{overflow:visible}
 <div id="title" class="layer">
   <div class="ttl">奥特曼<br>打怪兽</div>
   <div class="sub">变身成奥特曼，打败大怪兽！</div>
-  <div class="row" id="titleArt" style="height:min(36vh,300px);align-items:flex-end"></div>
+  <div class="row" id="titleArt" style="height:min(40vh,340px);align-items:flex-end;flex-wrap:nowrap;gap:clamp(10px,4vw,40px)"></div>
   <button class="big" id="startBtn">开始！</button>
 </div>
 
@@ -989,7 +994,15 @@ $('#startBtn').addEventListener('click',()=>{
   sfx.henshin(); $('#title').hidden=true; CLIP.f_hello={url:AUDIO.f_hello,p:Promise.resolve(AUDIO.f_hello)};
   setTimeout(showHeroPick,1800);
 });
-$('#titleArt').innerHTML=[heroArt(save.hero||'tiga',{real:1,pose:'beam',noFx:1}),monArt('gomora')].map(x=>x.replace(/^<(svg|img)/,'<$1 style="height:100%;width:auto;max-width:45vw;object-fit:contain"')).join('');
+// 主页：随机一位有下载图的奥特曼和他的宿敌面对面；没有下载图的版本用手绘迪迦，不用玩具照片
+(function(){
+  const refs=HEROES.map(h=>h[0]).filter(id=>IMG.h[id]&&IMG.h[id].dl&&RIVAL[id]&&IMG.m[RIVAL[id]]&&!['gransphere','zesu','megalothor'].includes(RIVAL[id]));
+  const hid=refs.length?refs[Math.floor(Math.random()*refs.length)]:'tiga';
+  const mid=(RIVAL[hid]&&MONSTERS.some(m=>m.id===RIVAL[hid]))?RIVAL[hid]:MONSTERS[0].id;
+  const st='style="height:100%;width:auto;max-width:min(42vw,52vh);object-fit:contain;object-position:50% 100%"';
+  const h=refs.length?photoTag(IMG.h[hid]):heroSVG(hid,{real:1,pose:'beam',noFx:1});
+  $('#titleArt').innerHTML=[h,monArt(mid)].map(x=>x.replace(/^<(svg|img)/,'<$1 '+st)).join('');
+})();
 addEventListener('resize',()=>layout());
 layout(); requestAnimationFrame(loop); if(!reduce) requestAnimationFrame(grainLoop);
 window.__fight={startFight,MONSTERS,save,punch,fireBeam,shieldUp,monsterAttack,setPose,rigSVG,applyRig,IMG,heroSVG};
