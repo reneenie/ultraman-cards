@@ -37,6 +37,10 @@ button:focus-visible{outline:4px solid var(--timer);outline-offset:3px}
   filter:brightness(.92) contrast(1.06) saturate(1.06) drop-shadow(-6px -4px 10px rgba(255,140,80,.28)) drop-shadow(0 0 14px rgba(120,140,255,.25))}
 .photo.mir{transform:scaleX(-1)}
 .pick .pa img{height:100%;width:100%;object-fit:contain;object-position:50% 100%}
+.jt,.whole{transform-box:view-box;transition:transform .13s cubic-bezier(.3,1.5,.5,1)}
+svg.rig{overflow:visible}
+.flip{position:relative}
+.pl{position:absolute;inset:0}
 #hero[data-photo] .flip{transform:none}
 #hero[data-photo].idle .flip{animation:breatheP 2.4s ease-in-out infinite}
 #hero[data-photo].hurt .flip{animation:hurtP .5s}
@@ -226,7 +230,7 @@ const $=s=>document.querySelector(s);
 const O='#141B3D'; let UID=0; const f1=n=>Math.round(n*10)/10;
 const MONSTERS=[{"id": "gomora", "name": "哥莫拉", "intro": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "hp": 12}, {"id": "eleking", "name": "艾雷王", "intro": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "hp": 12}, {"id": "redking", "name": "雷德王", "intro": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "hp": 14}, {"id": "baltan", "name": "巴尔坦星人", "intro": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "hp": 14}, {"id": "kingjoe", "name": "金古桥", "intro": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "hp": 16}, {"id": "zetton", "name": "杰顿", "intro": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "hp": 16}];
 const AUDIO={"f_hello": "../audio/f_hello.mp3", "f_pickHero": "../audio/f_pickHero.mp3", "f_pickMonster": "../audio/f_pickMonster.mp3", "f_locked": "../audio/f_locked.mp3", "f_henshin": "../audio/f_henshin.mp3", "f_go": "../audio/f_go.mp3", "f_good1": "../audio/f_good1.mp3", "f_good2": "../audio/f_good2.mp3", "f_warn": "../audio/f_warn.mp3", "f_block": "../audio/f_block.mp3", "f_ouch": "../audio/f_ouch.mp3", "f_full": "../audio/f_full.mp3", "f_timer": "../audio/f_timer.mp3", "f_beam": "../audio/f_beam.mp3", "f_absorb": "../audio/f_absorb.mp3", "f_dizzy": "../audio/f_dizzy.mp3", "f_win": "../audio/f_win.mp3", "f_new": "../audio/f_new.mp3", "f_book": "../audio/f_book.mp3", "f_allwin": "../audio/f_allwin.mp3", "f_n_gomora": "../audio/f_n_gomora.mp3", "f_i_gomora": "../audio/f_i_gomora.mp3", "f_n_eleking": "../audio/f_n_eleking.mp3", "f_i_eleking": "../audio/f_i_eleking.mp3", "f_n_redking": "../audio/f_n_redking.mp3", "f_i_redking": "../audio/f_i_redking.mp3", "f_n_baltan": "../audio/f_n_baltan.mp3", "f_i_baltan": "../audio/f_i_baltan.mp3", "f_n_kingjoe": "../audio/f_n_kingjoe.mp3", "f_i_kingjoe": "../audio/f_i_kingjoe.mp3", "f_n_zetton": "../audio/f_n_zetton.mp3", "f_i_zetton": "../audio/f_i_zetton.mp3", "n_orig": "../audio/n_orig.mp3", "n_tiga": "../audio/n_tiga.mp3", "n_zero": "../audio/n_zero.mp3", "n_ginga": "../audio/n_ginga.mp3", "n_zeta": "../audio/n_zeta.mp3", "n_trigger": "../audio/n_trigger.mp3", "n_decker": "../audio/n_decker.mp3", "n_blazar": "../audio/n_blazar.mp3", "n_arc": "../audio/n_arc.mp3"};
-const TEXT={"f_hello": "小朋友，我们一起变身奥特曼，去打怪兽吧！", "f_pickHero": "你想变成哪一位奥特曼？点一点他！", "f_pickMonster": "怪兽出现了！选一只怪兽去打败它！", "f_locked": "先打败前面的怪兽，这只才会出现哦！", "f_henshin": "变身！", "f_go": "点怪兽出拳，打败它！", "f_good1": "打得好！", "f_good2": "再来一拳！", "f_warn": "怪兽要攻击了！快按盾牌！", "f_block": "挡住啦！好厉害！", "f_ouch": "哎哟！没关系，站起来继续战斗！", "f_full": "能量满啦！快按光线按钮！", "f_timer": "胸口的计时器在闪了！快用必杀技！", "f_beam": "必杀光线！", "f_absorb": "什么？杰顿把光线吸收了！继续出拳，再来一次！", "f_dizzy": "怪兽晕倒啦！快用光线！", "f_win": "胜利！怪兽变成小小的，回宇宙去啦！", "f_new": "新的怪兽出现了！", "f_book": "这是怪兽图鉴，点一点，听听怪兽的故事。", "f_allwin": "太厉害了！所有怪兽都打败啦！", "f_n_gomora": "哥莫拉！", "f_i_gomora": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "f_n_eleking": "艾雷王！", "f_i_eleking": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "f_n_redking": "雷德王！", "f_i_redking": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "f_n_baltan": "巴尔坦星人！", "f_i_baltan": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "f_n_kingjoe": "金古桥！", "f_i_kingjoe": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "f_n_zetton": "杰顿！", "f_i_zetton": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "n_orig": "初代奥特曼！", "n_tiga": "迪迦奥特曼！", "n_zero": "赛罗奥特曼！", "n_ginga": "银河奥特曼！", "n_zeta": "泽塔奥特曼！", "n_trigger": "特利迦奥特曼！", "n_decker": "德凯奥特曼！", "n_blazar": "布莱泽奥特曼！", "n_arc": "阿克奥特曼！"};
+const TEXT={"f_hello": "小朋友，我们一起变身奥特曼，去打怪兽吧！", "f_pickHero": "你想变成哪一位奥特曼？点一点他！", "f_pickMonster": "怪兽出现了！选一只怪兽去打败它！", "f_locked": "先打败前面的怪兽，这只才会出现哦！", "f_henshin": "变身！", "f_go": "点怪兽出拳，打败它！", "f_good1": "打得好！", "f_good2": "再来一拳！", "f_warn": "怪兽要攻击了！快按盾牌！", "f_block": "挡住啦！好厉害！", "f_ouch": "哎哟！没关系，站起来继续战斗！", "f_full": "能量满啦！快按光线按钮！", "f_timer": "胸口的计时器在闪了！快用必杀技！", "f_beam": "必杀光线！", "f_absorb": "什么？杰顿把光线吸收了！继续出拳，再来一次！", "f_dizzy": "怪兽晕倒啦！快用光线！", "f_win": "胜利！怪兽变成小小的，回宇宙去啦！", "f_new": "新的怪兽出现了！", "f_book": "这是怪兽图鉴，点一点，听听怪兽的故事。", "f_allwin": "太厉害了！所有怪兽都打败啦！", "f_n_gomora": "哥莫拉！", "f_i_gomora": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "f_n_eleking": "艾雷王！", "f_i_eleking": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "f_n_redking": "雷德王！", "f_i_redking": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "f_n_baltan": "巴尔坦星人！", "f_i_baltan": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "f_n_kingjoe": "金古桥！", "f_i_kingjoe": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "f_n_zetton": "杰顿！", "f_i_zetton": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "n_orig": "初代奥特曼！", "n_tiga": "迪迦奥特曼！", "n_zero": "赛罗奥特曼！", "n_ginga": "银河奥特曼！", "n_zeta": "泽塔奥特曼！", "n_trigger": "特利迦奥特曼！", "n_decker": "德凯奥特曼！", "n_blazar": "布莱泽奥特曼！", "n_arc": "亚刻奥特曼！"};
 const IMG={"h": {}, "m": {}};
 /* ---------- 奥特曼外观配置 ---------- */
 const C={R:'#D21F2B',DR:'#A3121C',B:'#2456C8',BL:'#3E9BE8',P:'#6A39B4',K:'#2B2F3B',G:'#E1B23F',S:'#D8DDE6',O:'#EC7A2F',GR:'#8B93A5',T:'#1FA7A0'};
@@ -315,10 +319,13 @@ function heroSVG(id,opt){
   const pelvis='M75 166 L125 166 C129 178 127 188 120 195 L100 201 L80 195 C73 188 71 178 75 166 Z';
   const legL='M80 186 L100 197 C99 220 94 238 92 254 L66 254 C67 238 71 212 80 186 Z';
   const legR=mirror(legL);
-  const beam=opt.pose?opt.pose==='beam':BEAM.has(id);
-  const upL=beam?cap(60,88,58,132,10+bulk/2,8):cap(60,88,36,106,10+bulk/2,8), foreL=beam?cap(60,134,64,92,8,6.8):cap(36,106,32,74,8,6.8);
-  const upR=beam?cap(140,88,150,122,10+bulk/2,8):cap(140,88,156,124,10+bulk/2,8), foreR=beam?cap(150,122,76,116,8,6.8):cap(156,124,153,156,8,6.8);
-  const bodyParts=beam?[torso,pelvis,legL,legR,upL,upR,foreL,foreR]:[torso,pelvis,legL,legR,upL,foreL,upR,foreR];
+  const pose=opt.pose||(BEAM.has(id)?'beam':'stand'); const beam=pose==='beam';
+  let upL=beam?cap(60,88,58,132,10+bulk/2,8):cap(60,88,36,106,10+bulk/2,8), foreL=beam?cap(60,134,64,92,8,6.8):cap(36,106,32,74,8,6.8);
+  let upR=beam?cap(140,88,150,122,10+bulk/2,8):cap(140,88,156,124,10+bulk/2,8), foreR=beam?cap(150,122,76,116,8,6.8):cap(156,124,153,156,8,6.8);
+  let fists=beam?[[65,86],[74,116]]:[[32,70],[153,162]], front=beam;
+  if(pose==='punch'){ upL=cap(60,88,34,92,10+bulk/2,8); foreL=cap(34,92,6,90,8,6.8); fists=[[2,90],[153,162]]; }
+  if(pose==='guard'){ upL=cap(60,88,54,122,10+bulk/2,8); foreL=cap(54,122,106,82,8,6.8); upR=cap(140,88,146,122,10+bulk/2,8); foreR=cap(146,122,94,82,8,6.8); fists=[[108,79],[92,79]]; front=true; }
+  const bodyParts=front?[torso,pelvis,legL,legR,upL,upR,foreL,foreR]:[torso,pelvis,legL,legR,upL,foreL,upR,foreR];
   const PIECES={
     all:'M-20 -20 H220 V280 H-20 Z',
     sides:both('M50 80 C66 88 78 112 86 150 L91 172 L60 172 L42 110 Z'),
@@ -362,12 +369,12 @@ function heroSVG(id,opt){
   bodyParts.forEach(d=>s+=`<path d="${d}" fill="none" ${ln}/>`);
   // 拳头
   const fist=(x,y)=>`<circle cx="${x}" cy="${y}" r="9.5" fill="url(#${u}silb)" ${ln}/><path d="M${x-6} ${y-3} H${x+6} M${x-6} ${y+1} H${x+6}" stroke="#000" stroke-opacity=".25" stroke-width="1.2"/>`;
+  s+=fists.map(f=>fist(f[0],f[1])).join('');
   if(beam){
-    s+=fist(65,86)+fist(74,116);
     if(!opt.noFx) s+=`<path d="M58 84 C30 60 8 40 -20 20 L-20 0 C14 20 40 44 70 76 Z" fill="url(#${u}bm)" opacity=".95"/><ellipse cx="64" cy="100" rx="10" ry="26" fill="#FFFFFF" opacity=".55"/>`;
     defs+=`<linearGradient id="${u}bm" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".35" stop-color="#BDF3FF"/><stop offset="1" stop-color="#4FC3FF" stop-opacity="0"/></linearGradient>`;
-  }else{ s+=fist(32,70)+fist(153,162); }
-  if(h.brace&&!beam) s+=`<path d="${cap(33.4,86,33,80,9.3,9)}" fill="${h.brace}" ${ln}/>`;
+  }
+  if(h.brace&&pose==='stand') s+=`<path d="${cap(33.4,86,33,80,9.3,9)}" fill="${h.brace}" ${ln}/>`;
   if(h.stars){ for(let i=0;i<7;i++){ const x=76+i*8; s+=`<circle cx="${x}" cy="${i%2?96:92}" r="2.4" fill="#F1F3F8" ${ln}/>`; } }
   if(h.crystals){
     const cc=h.crystals, dia=(x,y,r)=>`<path d="M${x} ${y-r} L${x+r*.7} ${y} L${x} ${y+r} L${x-r*.7} ${y} Z" fill="${cc}" stroke="${O}" stroke-width="1.6"/><path d="M${x} ${y-r} L${x} ${y+r}" stroke="#FFFFFF" stroke-opacity=".6" stroke-width="1"/>`;
@@ -388,6 +395,7 @@ function heroSVG(id,opt){
   if(T==='y') s+=`<path d="M100 96 C107 96 110 104 110 110 C110 118 105 124 100 124 C95 124 90 118 90 110 C90 104 93 96 100 96 Z" fill="url(#${u}tm)" ${ln}/><path d="M94 102 L100 110 L106 102 M100 110 V120" fill="none" stroke="#E8FBFF" stroke-width="2"/>`;
   if(T==='ring') s+=`<circle cx="100" cy="108" r="11" fill="none" stroke="url(#${u}sil)" stroke-width="4"/><circle cx="100" cy="108" r="11" fill="none" stroke="${O}" stroke-width="1"/><circle cx="100" cy="108" r="6.5" fill="url(#${u}tm)" ${ln}/>`;
   if(T==='gaia') s+=`<path d="M92 104 L100 98 L108 104 L108 114 L100 120 L92 114 Z" fill="url(#${u}tm)" ${ln}/>`;
+  if(pose==='guard'){ s+=[foreL,foreR].map(d=>`<path d="${d}" fill="url(#${u}base)" ${ln}/>`).join('')+fists.map(f=>fist(f[0],f[1])).join(''); }
   // 脖子和头
   s+=`<path d="M90 60 L110 60 L112 78 L88 78 Z" fill="url(#${u}sil)" ${ln}/>`;
   const head='M100 19 C114 19 121 31 121 44 C121 57 114 68 100 70 C86 68 79 57 79 44 C79 31 86 19 100 19 Z';
@@ -459,7 +467,7 @@ function heroSVG(id,opt){
 }
 
 
-const HNAMES={"orig": "初代", "seven": "赛文", "jack": "杰克", "ace": "艾斯", "taro": "泰罗", "leo": "雷欧", "astra": "阿斯特拉", "zoffy": "佐菲", "father": "奥特之父", "mother": "奥特之母", "king": "奥特之王", "joneus": "乔尼亚斯", "eighty": "爱迪", "yullian": "尤莉安", "great": "葛雷", "powered": "帕瓦特", "tiga": "迪迦", "dyna": "戴拿", "gaia": "盖亚", "agul": "阿古茹", "neos": "奈欧斯", "seven21": "赛文21", "cosmos": "高斯", "nexus": "奈克瑟斯", "noa": "诺亚", "max": "麦克斯", "xenon": "杰诺", "mebius": "梦比优斯", "hikari": "希卡利", "sevenx": "赛文X", "zero": "赛罗", "ginga": "银河", "victory": "维克特利", "x": "艾克斯", "orb": "欧布", "geed": "捷德", "rosso": "罗索", "blu": "布鲁", "grigio": "格丽乔", "taiga": "泰迦", "titas": "泰塔斯", "fuma": "风马", "zeta": "泽塔", "trigger": "特利迦", "decker": "德凯", "blazar": "布莱泽", "arc": "阿克", "omega": "欧米伽", "teo": "提欧"};
+const HNAMES={"orig": "初代", "seven": "赛文", "jack": "杰克", "ace": "艾斯", "taro": "泰罗", "leo": "雷欧", "astra": "阿斯特拉", "zoffy": "佐菲", "father": "奥特之父", "mother": "奥特之母", "king": "奥特之王", "joneus": "乔尼亚斯", "eighty": "爱迪", "yullian": "尤莉安", "great": "葛雷", "powered": "帕瓦特", "tiga": "迪迦", "dyna": "戴拿", "gaia": "盖亚", "agul": "阿古茹", "neos": "奈欧斯", "seven21": "赛文21", "cosmos": "高斯", "nexus": "奈克瑟斯", "noa": "诺亚", "max": "麦克斯", "xenon": "杰诺", "mebius": "梦比优斯", "hikari": "希卡利", "sevenx": "赛文X", "zero": "赛罗", "ginga": "银河", "victory": "维克特利", "x": "艾克斯", "orb": "欧布", "geed": "捷德", "rosso": "罗索", "blu": "布鲁", "grigio": "格丽乔", "taiga": "泰迦", "titas": "泰塔斯", "fuma": "风马", "zeta": "泽塔", "trigger": "特利迦", "decker": "德凯", "blazar": "布莱泽", "arc": "亚刻", "omega": "欧米伽", "teo": "提欧"};
 const HEROES=(()=>{ const base=['orig','tiga','zero','zeta','trigger','decker','blazar','arc']; const ids=[...Object.keys(IMG.h),...base.filter(x=>!IMG.h[x])]; return ids.map(id=>[id,HNAMES[id]||id]); })();
 
 /* ---------- 怪兽（特摄质感：皮肤纹理 + 侧光 + 发光眼睛） ---------- */
@@ -565,6 +573,34 @@ function monsterSVG(id){
 /* ---------- 玩具照片（有就用照片，没有就用手绘） ---------- */
 function photoTag(p){ return `<img class="photo${p.flip?' mir':''}" src="${p.src}" alt="" draggable="false">`; }
 function heroArt(id,opt){ const p=IMG.h[id]; return p?photoTag(p):heroSVG(id,opt); }
+// 把一张玩具照片切成身体、两条胳膊、一条腿，绕肩膀和胯转动，像皮影戏一样做动作
+function clipBelow(poly,y0){ const out=[]; for(let i=0;i<poly.length;i++){ const a=poly[i], b=poly[(i+1)%poly.length], ia=a[1]>=y0, ib=b[1]>=y0;
+  if(ia) out.push(a); if(ia!==ib){ const t=(y0-a[1])/(b[1]-a[1]); out.push([f1(a[0]+(b[0]-a[0])*t),y0]); } } return out; }
+function rigSVG(p){
+  const r=p.rig, u='r'+(++UID), W=r.w, H=r.h, parts=['leg','armL','armR'].filter(k=>r[k]);
+  let cut=`M0 0H${W}V${H}H0Z`; parts.forEach(k=>{ const c=clipBelow(r[k].poly,r[k].cut); if(c.length>2) cut+=' M'+c.map(q=>q.join(' ')).join(' L')+' Z'; });
+  let defs=`<clipPath id="${u}b"><path clip-rule="evenodd" d="${cut}"/></clipPath>`;
+  parts.forEach(k=>defs+=`<clipPath id="${u}${k}"><polygon points="${r[k].poly.map(q=>q.join(',')).join(' ')}"/></clipPath>`);
+  const img=c=>`<image href="${p.src}" width="${W}" height="${H}" clip-path="url(#${u}${c})"/>`;
+  const g=k=>r[k]?`<g class="jt" data-j="${k}" style="transform-origin:${r[k].pivot[0]}px ${r[k].pivot[1]}px">${img(k)}<circle class="tip" cx="${r[k].tip[0]}" cy="${r[k].tip[1]}" r="1" fill="none"/></g>`:'';
+  return `<svg class="photo rig" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>${defs}</defs><g class="whole" style="transform-origin:${W/2}px ${H}px">${g('leg')}${img('b')}${g('armL')}${g('armR')}</g></svg>`;
+}
+// 每个动作里，胳膊和腿要指向哪个方向（x 向右，y 向下）；lean 是整个身体倾斜的角度
+const POSES={
+  stand:{},
+  punch:{armR:[1,-.06],armL:[-.55,.85],lean:5},
+  kick:{leg:[1,.22],armR:[.75,.65],armL:[-.8,.6],lean:-9},
+  guard:{armR:[-.82,-.57],armL:[.82,-.57],lean:-3},
+  beam:{armR:[1,-.02],armL:[.96,-.28],lean:3},
+  win:{armR:[.22,-1],lean:0}
+};
+function applyRig(svg,name){
+  const r=IMG.h[save.hero].rig, P=POSES[name]||{};
+  svg.querySelectorAll('.jt').forEach(g=>{ const k=g.dataset.j, t=P[k]; let deg=0;
+    if(t){ const j=r[k], a0=Math.atan2(j.tip[1]-j.pivot[1],j.tip[0]-j.pivot[0]), a1=Math.atan2(t[1],t[0]); deg=(a1-a0)*180/Math.PI; while(deg>180) deg-=360; while(deg<-180) deg+=360; }
+    g.style.transform=deg?`rotate(${f1(deg)}deg)`:''; });
+  const w=svg.querySelector('.whole'); w.style.transform=P.lean?`rotate(${P.lean}deg)`:'';
+}
 function monArt(id){ const p=IMG.m[id]; return p?photoTag(p):monsterSVG(id); }
 
 /* ---------- 存档 ---------- */
@@ -733,7 +769,22 @@ function grainLoop(){ gt++; if(gt%3===0&&grain.width>0&&grain.height>0){ const w
 let current=null, inFight=false, hp=1, energy=0, attackTimer=null, shieldUntil=0, shieldCool=0, timerRed=false, beepTimer=null, punchAt=0, beams=0, fightStart=0, hits=0, saidFull=false, saidDizzy=false, busy=false, warned=0;
 function heroPoint(px,py){ const r=heroEl.getBoundingClientRect(), s=stage.getBoundingClientRect(); const ph=heroEl.hasAttribute('data-photo'); return {x:r.left-s.left+(ph?(200-px)/200:(1-px/200))*r.width, y:r.top-s.top+((py+8)/270)*r.height}; }
 function monPoint(px,py){ const r=monEl.getBoundingClientRect(), s=stage.getBoundingClientRect(); return {x:r.left-s.left+(px/260)*r.width, y:r.top-s.top+((py+10)/310)*r.height}; }
-function setHero(pose){ const ph=!!IMG.h[save.hero]; heroEl.toggleAttribute('data-photo',ph); $('#heroArt').innerHTML=heroArt(save.hero,{real:1,pose:pose||'stand',noFx:1,timerRed}); }
+let heroBuilt='', curPose='stand';
+function setHero(pose){
+  const p=IMG.h[save.hero]; heroEl.toggleAttribute('data-photo',!!p);
+  const key=save.hero+'|'+timerRed;
+  if(heroBuilt!==key){ heroBuilt=key;
+    $('#heroArt').innerHTML = p ? (p.rig?rigSVG(p):photoTag(p))
+      : ['stand','punch','guard','beam'].map(q=>`<div class="pl" data-p="${q}" hidden>${heroSVG(save.hero,{real:1,pose:q,noFx:1,timerRed})}</div>`).join('');
+  }
+  setPose(pose||'stand');
+}
+function setPose(name){
+  curPose=name; const art=$('#heroArt'), svg=art.querySelector('svg.rig');
+  if(svg){ applyRig(svg,name); return; }
+  const m={kick:'punch',win:'stand'}[name]||name; art.querySelectorAll('.pl').forEach(d=>{ d.hidden=d.dataset.p!==m; });
+}
+function beamOrigin(){ const t=heroEl.querySelector('[data-j="armR"] .tip'); if(!t) return heroPoint(64,92); const r=t.getBoundingClientRect(), s=stage.getBoundingClientRect(); return {x:r.left-s.left+r.width/2, y:r.top-s.top+r.height/2}; }
 function setBars(){ $('#energy i').style.width=(energy*100)+'%'; $('#mhp i').style.width=(Math.max(0,hp)*100)+'%';
   const b=$('#bBeam'); b.disabled=energy<1; b.classList.toggle('ready',energy>=1); }
 function startFight(mon){
@@ -758,6 +809,7 @@ function flash(){ const f=$('#flash'); f.classList.remove('go'); void f.offsetWi
 function punch(){
   if(!inFight||busy) return; const now=Date.now(); if(now-punchAt<240) return; punchAt=now;
   sfx.punch(); heroEl.classList.remove('idle'); heroEl.style.transform=`translateX(${G.mx-G.hx-G.mw*.55-G.hw*.35}px)`;
+  const act=(hits%3===2)?'kick':'punch'; setPose(act);
   setTimeout(()=>{
     const p=monPoint(120+Math.random()*30,110+Math.random()*60); sparks(p.x,p.y); for(let i=0;i<6;i++) emit({t:'fire',x:p.x,y:p.y,vx:(Math.random()-.5)*3,vy:(Math.random()-.5)*3,r:8+Math.random()*10,life:0,max:16});
     sfx.impact(); shake=Math.max(shake,8); monEl.classList.remove('flinch'); void monEl.offsetWidth; monEl.classList.add('flinch');
@@ -766,16 +818,16 @@ function punch(){
     else if(energy>=1&&!saidFull){ saidFull=true; say(['f_full']); }
     else if(hits%5===0) say([hits%10===0?'f_good2':'f_good1']);
   },110);
-  setTimeout(()=>{ heroEl.style.transform=''; heroEl.classList.add('idle'); },230);
+  setTimeout(()=>{ heroEl.style.transform=''; if(!busy){ heroEl.classList.add('idle'); if(curPose===act) setPose('stand'); } },260);
 }
 function addStars(){ const s=document.createElement('div'); s.className='stars'; s.id='dizzyStars'; s.textContent='★ ★ ★'; const p=monPoint(110,10); s.style.left=(p.x-40)+'px'; s.style.top=(p.y-40)+'px'; stage.appendChild(s); }
 function clearMarks(){ document.querySelectorAll('.warnmark,.stars,.shield').forEach(e=>e.remove()); }
 function shieldUp(){
   if(!inFight||busy) return; const now=Date.now(); if(now<shieldCool) return;
-  shieldUntil=now+1300; shieldCool=now+1500; sfx.block();
+  shieldUntil=now+1300; shieldCool=now+1500; sfx.block(); setPose('guard');
   const s=document.createElement('div'); s.className='shield'; const c=heroPoint(100,120); const r=G.hh*.62;
   Object.assign(s.style,{width:r*2+'px',height:r*2+'px',left:(c.x-r)+'px',top:(c.y-r)+'px'}); stage.appendChild(s);
-  $('#bShield').classList.add('cool'); setTimeout(()=>{ s.remove(); $('#bShield').classList.remove('cool'); },1300);
+  $('#bShield').classList.add('cool'); setTimeout(()=>{ s.remove(); $('#bShield').classList.remove('cool'); if(curPose==='guard'&&!busy) setPose('stand'); },1300);
 }
 function scheduleAttack(ms){ clearTimeout(attackTimer); attackTimer=setTimeout(monsterAttack,ms||(5200+Math.random()*2400)); }
 function monsterAttack(){
@@ -806,7 +858,7 @@ function fireBeam(){
   heroEl.classList.remove('idle'); setHero('beam'); say(['f_beam']); sfx.charge();
   slow=.45; energy=0; setBars();
   setTimeout(()=>{
-    sfx.beam(); const a=heroPoint(64,92), b=monPoint(118,140); beamFx={x1:a.x,y1:a.y,x2:b.x,y2:b.y,t:0}; shake=6;
+    sfx.beam(); const a=beamOrigin(), b=monPoint(118,140); beamFx={x1:a.x,y1:a.y,x2:b.x,y2:b.y,t:0}; shake=6;
     const absorb=current.id==='zetton'&&beams===1;
     setTimeout(()=>{
       beamFx=null; slow=1;
@@ -820,7 +872,7 @@ function victory(b){
   flash(); explode(b.x,b.y,2.2); sfx.boom(); shake=34;
   setTimeout(()=>{ explode(b.x,b.y-G.mh*.2,1.6); sfx.boom(); },250);
   setTimeout(()=>{ monEl.style.transition='transform 1.4s ease-in,opacity 1.4s'; monEl.style.transform='translateY(-120%) scale(.12)'; monEl.style.opacity='0'; },500);
-  setTimeout(()=>{ setHero('stand'); heroEl.classList.add('idle'); sfx.fanfare(); },1300);
+  setTimeout(()=>{ setHero('win'); heroEl.classList.add('idle'); sfx.fanfare(); },1300);
   const first=!save.beaten[current.id]; save.beaten[current.id]=(save.beaten[current.id]||0)+1; persist();
   setTimeout(()=>{
     $('#hud').hidden=true; $('#controls').hidden=true; $('#rotateTip').hidden=true;
@@ -873,7 +925,7 @@ $('#startBtn').addEventListener('click',()=>{
 $('#titleArt').innerHTML=[heroArt(save.hero||'tiga',{real:1,pose:'beam',noFx:1}),monArt('gomora')].map(x=>x.replace(/^<(svg|img)/,'<$1 style="height:100%;width:auto;max-width:45vw;object-fit:contain"')).join('');
 addEventListener('resize',()=>layout());
 layout(); requestAnimationFrame(loop); if(!reduce) requestAnimationFrame(grainLoop);
-window.__fight={startFight,MONSTERS,save,punch,fireBeam,shieldUp,monsterAttack};
+window.__fight={startFight,MONSTERS,save,punch,fireBeam,shieldUp,monsterAttack,setPose,rigSVG,applyRig,IMG,heroSVG};
 })();
 </script>
 
