@@ -97,13 +97,16 @@ svg.rig{overflow:visible}
 /* 三个按钮都放在奥特曼这一侧（左下角）：上面防御，下面出拳和光线；怪兽那边不放按钮 */
 .controls{position:absolute;left:0;bottom:0;z-index:8;display:grid;grid-template-areas:"shield ." "punch beam";align-items:end;justify-items:center;gap:10px 12px;
   padding-bottom:max(14px, calc(env(safe-area-inset-bottom, 0px) + 8px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
-.cbtn{width:clamp(78px,22vw,104px);height:clamp(78px,22vw,104px);border-radius:50%;border:4px solid rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  font-family:var(--display);font-size:clamp(15px,4vw,19px);color:#FFFFFF;text-shadow:0 2px 0 rgba(0,0,0,.5);box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 20px rgba(0,0,0,.4)}
-.cbtn svg{width:52%;height:auto}
-.cbtn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.45)}
-#bPunch{background:radial-gradient(circle at 40% 30%,#FF7A6E,#C8141C)}
-#bShield{background:radial-gradient(circle at 40% 30%,#8FE4FF,#1468C8)}
-#bBeam{background:radial-gradient(circle at 40% 30%,#FFF3B0,#E59A00);width:clamp(92px,26vw,124px);height:clamp(92px,26vw,124px)}
+.cbtn{position:relative;width:clamp(78px,22vw,104px);height:clamp(78px,22vw,104px);border-radius:50%;border:3px solid rgba(255,255,255,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;
+  font-family:var(--display);font-size:clamp(12px,3.2vw,15px);line-height:1;color:#FFFFFF;text-shadow:0 2px 0 rgba(0,0,0,.6);
+  box-shadow:inset 0 -9px 14px rgba(0,0,0,.42),inset 0 6px 10px rgba(255,255,255,.35),0 6px 0 rgba(0,0,0,.5),0 0 18px var(--glow,rgba(0,0,0,.4))}
+.cbtn::before{content:"";position:absolute;left:14%;right:14%;top:5%;height:36%;border-radius:50%;background:linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,0));pointer-events:none}
+.cbtn svg{width:66%;height:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));position:relative}
+.cbtn span{position:relative;margin-top:-2px}
+.cbtn:active{transform:translateY(4px);box-shadow:inset 0 -6px 10px rgba(0,0,0,.42),inset 0 4px 8px rgba(255,255,255,.3),0 2px 0 rgba(0,0,0,.5)}
+#bPunch{--glow:rgba(255,90,70,.55);background:radial-gradient(circle at 38% 26%,#FF9A8C,#D4222A 52%,#6E0A10)}
+#bShield{--glow:rgba(94,200,255,.55);background:radial-gradient(circle at 38% 26%,#B6ECFF,#2B7FD4 52%,#0B2E6B)}
+#bBeam{--glow:rgba(255,212,71,.6);background:radial-gradient(circle at 38% 26%,#FFF7C8,#EDA211 52%,#7A4300);width:clamp(92px,26vw,124px);height:clamp(92px,26vw,124px)}
 #bBeam[disabled]{filter:grayscale(.85) brightness(.6)}
 #bBeam.ready{animation:ready .7s ease-in-out infinite alternate}
 @keyframes ready{from{box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 10px #FFD447}to{box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 44px 10px #FFE066}}
@@ -194,9 +197,69 @@ svg.rig{overflow:visible}
   </div>
   <div id="rotateTip" hidden>横过来玩更像电视哦</div>
   <div class="controls" id="controls" hidden>
-    <button class="cbtn" id="bShield" aria-label="防御"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 5v10c0 9-6 16-14 19C12 34 6 27 6 18V8z" fill="#E8FDFF" stroke="#0A3A73" stroke-width="2.5"/></svg>防御</button>
-    <div class="rgt"><button class="cbtn" id="bBeam" aria-label="光线" disabled><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="17" y="3" width="7" height="30" rx="3.5" fill="#FFFFFF" stroke="#7A4A00" stroke-width="2"/><rect x="4" y="18" width="24" height="7" rx="3.5" fill="#FFFFFF" stroke="#7A4A00" stroke-width="2"/><path d="M27 8 L39 2 M28 13 L40 11" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/></svg>光线</button>
-    <button class="cbtn" id="bPunch" aria-label="出拳"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 16c0-3 2-5 5-5h14c4 0 6 3 6 6v8c0 6-4 10-10 10h-6c-5 0-9-4-9-9z" fill="#FFE1DE" stroke="#5E0A06" stroke-width="2.5"/><path d="M14 11v8M20 11v8M26 11v8" stroke="#5E0A06" stroke-width="2"/></svg>出拳</button></div>
+    <button class="cbtn" id="bShield" aria-label="防御">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="shA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4FBFF"/><stop offset=".35" stop-color="#9FD4F2"/><stop offset=".7" stop-color="#3F86C9"/><stop offset="1" stop-color="#143A78"/></linearGradient>
+          <linearGradient id="shB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EAF7FF"/><stop offset=".5" stop-color="#6FB6E8"/><stop offset="1" stop-color="#1C4F9A"/></linearGradient>
+          <linearGradient id="shRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#C9D1E0"/><stop offset="1" stop-color="#5E6A82"/></linearGradient>
+          <radialGradient id="shGem" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#7FE9FF"/><stop offset="1" stop-color="#0F7FC6"/></radialGradient>
+          <filter id="shGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>
+        </defs>
+        <path d="M32 3 L57 11 V30 C57 46 46 57 32 62 C18 57 7 46 7 30 V11 Z" fill="#6FD8FF" opacity=".55" filter="url(#shGlow)"/>
+        <path d="M32 4 L56 12 V30 C56 45.5 45.5 56 32 61 C18.5 56 8 45.5 8 30 V12 Z" fill="url(#shRim)" stroke="#0D2A5C" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M32 9 L51.5 15.5 V30 C51.5 42.5 43 51.5 32 55.8 C21 51.5 12.5 42.5 12.5 30 V15.5 Z" fill="url(#shA)"/>
+        <path d="M32 9 L51.5 15.5 V30 C51.5 42.5 43 51.5 32 55.8 Z" fill="url(#shB)" opacity=".55"/>
+        <path d="M32 9 V55.8 M12.5 27 H51.5" stroke="#FFFFFF" stroke-opacity=".45" stroke-width="1.4"/>
+        <path d="M15.5 17.5 L30 12.6 V24 H15.5 Z" fill="#FFFFFF" opacity=".38"/>
+        <circle cx="32" cy="27" r="8.5" fill="url(#shRim)" stroke="#0D2A5C" stroke-width="1.2"/>
+        <circle cx="32" cy="27" r="6" fill="url(#shGem)"/><ellipse cx="30" cy="24.6" rx="2.4" ry="1.5" fill="#FFFFFF"/>
+        <g fill="#C9D1E0" stroke="#0D2A5C" stroke-width=".7"><circle cx="16.5" cy="19" r="1.5"/><circle cx="47.5" cy="19" r="1.5"/><circle cx="19" cy="40" r="1.5"/><circle cx="45" cy="40" r="1.5"/></g>
+      </svg><span>防御</span></button>
+    <div class="rgt">
+    <button class="cbtn" id="bBeam" aria-label="光线" disabled>
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="beArm" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7C8598"/><stop offset=".35" stop-color="#FFFFFF"/><stop offset=".7" stop-color="#C9D1E0"/><stop offset="1" stop-color="#6B7488"/></linearGradient>
+          <linearGradient id="beArmH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#C9D1E0"/><stop offset="1" stop-color="#5E6A82"/></linearGradient>
+          <linearGradient id="beRay" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".4" stop-color="#BDF3FF"/><stop offset="1" stop-color="#3FB6FF" stop-opacity=".0"/></linearGradient>
+          <radialGradient id="beFlare" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".35" stop-color="#BDF3FF" stop-opacity=".9"/><stop offset="1" stop-color="#3FB6FF" stop-opacity="0"/></radialGradient>
+          <filter id="beGlow" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="2.6"/></filter>
+        </defs>
+        <path d="M30 20 L66 6 V48 L30 34 Z" fill="#4FC3FF" opacity=".75" filter="url(#beGlow)"/>
+        <path d="M30 22 L66 12 V42 L30 32 Z" fill="url(#beRay)"/>
+        <path d="M30 25 L66 21 V33 L30 29 Z" fill="#FFFFFF"/>
+        <rect x="3" y="33" width="34" height="12" rx="6" fill="url(#beArmH)" stroke="#1B2246" stroke-width="1.5"/>
+        <rect x="3" y="33" width="9" height="12" rx="3" fill="#D21F2B" stroke="#1B2246" stroke-width="1.2"/>
+        <rect x="22" y="9" width="12.5" height="44" rx="6.2" fill="url(#beArm)" stroke="#1B2246" stroke-width="1.5"/>
+        <rect x="22" y="44" width="12.5" height="9" rx="3" fill="#D21F2B" stroke="#1B2246" stroke-width="1.2"/>
+        <path d="M24 13 H32.5 M24 17 H32.5 M24 21 H32.5" stroke="#1B2246" stroke-opacity=".3" stroke-width="1"/>
+        <circle cx="34" cy="27" r="13" fill="url(#beFlare)"/>
+        <path d="M34 12 L36 25 L49 27 L36 29 L34 42 L32 29 L19 27 L32 25 Z" fill="#FFFFFF"/>
+        <g fill="#FFFFFF"><circle cx="50" cy="14" r="1.6"/><circle cx="57" cy="40" r="1.3"/><circle cx="45" cy="45" r="1.1"/></g>
+      </svg><span>光线</span></button>
+    <button class="cbtn" id="bPunch" aria-label="出拳">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="fiS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#D5DBE6"/><stop offset="1" stop-color="#7C8598"/></linearGradient>
+          <linearGradient id="fiS2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EEF1F6"/><stop offset="1" stop-color="#6B7488"/></linearGradient>
+          <linearGradient id="fiR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF5A4E"/><stop offset="1" stop-color="#8E0F14"/></linearGradient>
+          <radialGradient id="fiB" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".4" stop-color="#FFE066"/><stop offset="1" stop-color="#FF7A1A"/></radialGradient>
+        </defs>
+        <path d="M32 0 L37 12 L48 4 L46 17 L60 14 L52 25 L64 30 L52 36 L60 48 L46 45 L47 58 L37 50 L32 62 L27 50 L17 58 L18 45 L4 48 L12 36 L0 30 L12 25 L4 14 L18 17 L16 4 L27 12 Z" fill="url(#fiB)" stroke="#B24A00" stroke-width="1"/>
+        <path d="M22 46 H44 L46 60 H20 Z" fill="url(#fiR)" stroke="#1B2246" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M13 30 C13 24 17 22 22 22 H44 C49 22 52 25 52 30 V40 C52 46 47 50 41 50 H24 C18 50 13 46 13 40 Z" fill="url(#fiS2)" stroke="#1B2246" stroke-width="1.5"/>
+        <g stroke="#1B2246" stroke-width="1.5">
+          <rect x="13.5" y="14" width="10" height="20" rx="5" fill="url(#fiS)"/>
+          <rect x="23" y="11.5" width="10" height="22" rx="5" fill="url(#fiS)"/>
+          <rect x="32.5" y="12" width="10" height="22" rx="5" fill="url(#fiS)"/>
+          <rect x="42" y="15" width="9.5" height="19" rx="4.7" fill="url(#fiS)"/>
+        </g>
+        <path d="M12 38 C12 32 19 31 27 33 L42 37 C47 38.5 46 46 41 46 L22 47 C15 47 12 43 12 38 Z" fill="url(#fiS)" stroke="#1B2246" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M15.5 21 H21.5 M25 19 H31 M34.5 19.5 H40.5 M44 22 H49.5" stroke="#1B2246" stroke-opacity=".35" stroke-width="1.2" stroke-linecap="round"/>
+        <g fill="#FFFFFF" opacity=".85"><ellipse cx="17" cy="17" rx="2" ry="1.2"/><ellipse cx="26.5" cy="14.5" rx="2" ry="1.2"/><ellipse cx="36" cy="15" rx="2" ry="1.2"/><ellipse cx="45.5" cy="18" rx="1.8" ry="1.1"/><ellipse cx="20" cy="36.5" rx="4" ry="1.4"/></g>
+      </svg><span>出拳</span></button>
+    </div>
   </div>
 </div>
 
