@@ -33,6 +33,15 @@ button:focus-visible{outline:4px solid var(--timer);outline-offset:3px}
 
 .actor{position:absolute;will-change:transform;transform-origin:50% 100%;z-index:3}
 .actor svg{width:100%;height:100%;display:block;overflow:visible}
+.photo{width:100%;height:100%;display:block;object-fit:contain;object-position:50% 100%;-webkit-user-drag:none;
+  filter:brightness(.92) contrast(1.06) saturate(1.06) drop-shadow(-6px -4px 10px rgba(255,140,80,.28)) drop-shadow(0 0 14px rgba(120,140,255,.25))}
+.photo.mir{transform:scaleX(-1)}
+.pick .pa img{height:100%;width:100%;object-fit:contain;object-position:50% 100%}
+#hero[data-photo] .flip{transform:none}
+#hero[data-photo].idle .flip{animation:breatheP 2.4s ease-in-out infinite}
+#hero[data-photo].hurt .flip{animation:hurtP .5s}
+@keyframes breatheP{0%,100%{transform:translateY(0)}50%{transform:translateY(-1%)}}
+@keyframes hurtP{0%{transform:none}30%{transform:translateX(-14%) rotate(-8deg);filter:brightness(1.8)}100%{transform:none}}
 .shadow{position:absolute;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent 70%);z-index:2;pointer-events:none}
 #hero{transition:transform .14s cubic-bezier(.3,1.6,.5,1)}
 #hero .flip{width:100%;height:100%;transform:scaleX(-1)}
@@ -100,6 +109,13 @@ button:focus-visible{outline:4px solid var(--timer);outline-offset:3px}
 .row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:min(100%,760px)}
 @media (max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (orientation:landscape){
+  #monGrid,#bookGrid{grid-template-columns:repeat(5,minmax(0,1fr))!important;width:min(100%,900px)}
+  #heroGrid{grid-template-columns:repeat(6,minmax(0,1fr));width:min(100%,960px)}
+  .pick .pa{aspect-ratio:1/1;max-height:20vh}
+  .layer .ttl{font-size:clamp(24px,7vh,44px)!important}
+  .layer{gap:10px}
+}
 .pick{position:relative;border:3px solid rgba(255,255,255,.35);border-radius:18px;background:radial-gradient(ellipse at 50% 40%,#3B4590,#121636 75%);padding:8px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;overflow:hidden}
 .pick.on{border-color:#FFD447;box-shadow:0 0 22px rgba(255,212,71,.6)}
 .pick:active{transform:scale(.96)}
@@ -209,8 +225,9 @@ button:focus-visible{outline:4px solid var(--timer);outline-offset:3px}
 const $=s=>document.querySelector(s);
 const O='#141B3D'; let UID=0; const f1=n=>Math.round(n*10)/10;
 const MONSTERS=[{"id": "gomora", "name": "哥莫拉", "intro": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "hp": 12}, {"id": "eleking", "name": "艾雷王", "intro": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "hp": 12}, {"id": "redking", "name": "雷德王", "intro": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "hp": 14}, {"id": "baltan", "name": "巴尔坦星人", "intro": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "hp": 14}, {"id": "kingjoe", "name": "金古桥", "intro": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "hp": 16}, {"id": "zetton", "name": "杰顿", "intro": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "hp": 16}];
-const AUDIO={"f_hello": "../audio/f_hello.mp3", "f_pickHero": "../audio/f_pickHero.mp3", "f_pickMonster": "../audio/f_pickMonster.mp3", "f_locked": "../audio/f_locked.mp3", "f_henshin": "../audio/f_henshin.mp3", "f_go": "../audio/f_go.mp3", "f_good1": "../audio/f_good1.mp3", "f_good2": "../audio/f_good2.mp3", "f_warn": "../audio/f_warn.mp3", "f_block": "../audio/f_block.mp3", "f_ouch": "../audio/f_ouch.mp3", "f_full": "../audio/f_full.mp3", "f_timer": "../audio/f_timer.mp3", "f_beam": "../audio/f_beam.mp3", "f_absorb": "../audio/f_absorb.mp3", "f_dizzy": "../audio/f_dizzy.mp3", "f_win": "../audio/f_win.mp3", "f_new": "../audio/f_new.mp3", "f_book": "../audio/f_book.mp3", "f_allwin": "../audio/f_allwin.mp3", "f_n_gomora": "../audio/f_n_gomora.mp3", "f_i_gomora": "../audio/f_i_gomora.mp3", "f_n_eleking": "../audio/f_n_eleking.mp3", "f_i_eleking": "../audio/f_i_eleking.mp3", "f_n_redking": "../audio/f_n_redking.mp3", "f_i_redking": "../audio/f_i_redking.mp3", "f_n_baltan": "../audio/f_n_baltan.mp3", "f_i_baltan": "../audio/f_i_baltan.mp3", "f_n_kingjoe": "../audio/f_n_kingjoe.mp3", "f_i_kingjoe": "../audio/f_i_kingjoe.mp3", "f_n_zetton": "../audio/f_n_zetton.mp3", "f_i_zetton": "../audio/f_i_zetton.mp3", "n_orig": "../audio/n_orig.mp3", "n_tiga": "../audio/n_tiga.mp3", "n_zero": "../audio/n_zero.mp3", "n_zeta": "../audio/n_zeta.mp3", "n_trigger": "../audio/n_trigger.mp3", "n_decker": "../audio/n_decker.mp3", "n_blazar": "../audio/n_blazar.mp3", "n_arc": "../audio/n_arc.mp3"};
-const TEXT={"f_hello": "小朋友，我们一起变身奥特曼，去打怪兽吧！", "f_pickHero": "你想变成哪一位奥特曼？点一点他！", "f_pickMonster": "怪兽出现了！选一只怪兽去打败它！", "f_locked": "先打败前面的怪兽，这只才会出现哦！", "f_henshin": "变身！", "f_go": "点怪兽出拳，打败它！", "f_good1": "打得好！", "f_good2": "再来一拳！", "f_warn": "怪兽要攻击了！快按盾牌！", "f_block": "挡住啦！好厉害！", "f_ouch": "哎哟！没关系，站起来继续战斗！", "f_full": "能量满啦！快按光线按钮！", "f_timer": "胸口的计时器在闪了！快用必杀技！", "f_beam": "必杀光线！", "f_absorb": "什么？杰顿把光线吸收了！继续出拳，再来一次！", "f_dizzy": "怪兽晕倒啦！快用光线！", "f_win": "胜利！怪兽变成小小的，回宇宙去啦！", "f_new": "新的怪兽出现了！", "f_book": "这是怪兽图鉴，点一点，听听怪兽的故事。", "f_allwin": "太厉害了！所有怪兽都打败啦！", "f_n_gomora": "哥莫拉！", "f_i_gomora": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "f_n_eleking": "艾雷王！", "f_i_eleking": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "f_n_redking": "雷德王！", "f_i_redking": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "f_n_baltan": "巴尔坦星人！", "f_i_baltan": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "f_n_kingjoe": "金古桥！", "f_i_kingjoe": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "f_n_zetton": "杰顿！", "f_i_zetton": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "n_orig": "初代奥特曼！", "n_tiga": "迪迦奥特曼！", "n_zero": "赛罗奥特曼！", "n_zeta": "泽塔奥特曼！", "n_trigger": "特利迦奥特曼！", "n_decker": "德凯奥特曼！", "n_blazar": "布莱泽奥特曼！", "n_arc": "阿克奥特曼！"};
+const AUDIO={"f_hello": "../audio/f_hello.mp3", "f_pickHero": "../audio/f_pickHero.mp3", "f_pickMonster": "../audio/f_pickMonster.mp3", "f_locked": "../audio/f_locked.mp3", "f_henshin": "../audio/f_henshin.mp3", "f_go": "../audio/f_go.mp3", "f_good1": "../audio/f_good1.mp3", "f_good2": "../audio/f_good2.mp3", "f_warn": "../audio/f_warn.mp3", "f_block": "../audio/f_block.mp3", "f_ouch": "../audio/f_ouch.mp3", "f_full": "../audio/f_full.mp3", "f_timer": "../audio/f_timer.mp3", "f_beam": "../audio/f_beam.mp3", "f_absorb": "../audio/f_absorb.mp3", "f_dizzy": "../audio/f_dizzy.mp3", "f_win": "../audio/f_win.mp3", "f_new": "../audio/f_new.mp3", "f_book": "../audio/f_book.mp3", "f_allwin": "../audio/f_allwin.mp3", "f_n_gomora": "../audio/f_n_gomora.mp3", "f_i_gomora": "../audio/f_i_gomora.mp3", "f_n_eleking": "../audio/f_n_eleking.mp3", "f_i_eleking": "../audio/f_i_eleking.mp3", "f_n_redking": "../audio/f_n_redking.mp3", "f_i_redking": "../audio/f_i_redking.mp3", "f_n_baltan": "../audio/f_n_baltan.mp3", "f_i_baltan": "../audio/f_i_baltan.mp3", "f_n_kingjoe": "../audio/f_n_kingjoe.mp3", "f_i_kingjoe": "../audio/f_i_kingjoe.mp3", "f_n_zetton": "../audio/f_n_zetton.mp3", "f_i_zetton": "../audio/f_i_zetton.mp3", "n_orig": "../audio/n_orig.mp3", "n_tiga": "../audio/n_tiga.mp3", "n_zero": "../audio/n_zero.mp3", "n_ginga": "../audio/n_ginga.mp3", "n_zeta": "../audio/n_zeta.mp3", "n_trigger": "../audio/n_trigger.mp3", "n_decker": "../audio/n_decker.mp3", "n_blazar": "../audio/n_blazar.mp3", "n_arc": "../audio/n_arc.mp3"};
+const TEXT={"f_hello": "小朋友，我们一起变身奥特曼，去打怪兽吧！", "f_pickHero": "你想变成哪一位奥特曼？点一点他！", "f_pickMonster": "怪兽出现了！选一只怪兽去打败它！", "f_locked": "先打败前面的怪兽，这只才会出现哦！", "f_henshin": "变身！", "f_go": "点怪兽出拳，打败它！", "f_good1": "打得好！", "f_good2": "再来一拳！", "f_warn": "怪兽要攻击了！快按盾牌！", "f_block": "挡住啦！好厉害！", "f_ouch": "哎哟！没关系，站起来继续战斗！", "f_full": "能量满啦！快按光线按钮！", "f_timer": "胸口的计时器在闪了！快用必杀技！", "f_beam": "必杀光线！", "f_absorb": "什么？杰顿把光线吸收了！继续出拳，再来一次！", "f_dizzy": "怪兽晕倒啦！快用光线！", "f_win": "胜利！怪兽变成小小的，回宇宙去啦！", "f_new": "新的怪兽出现了！", "f_book": "这是怪兽图鉴，点一点，听听怪兽的故事。", "f_allwin": "太厉害了！所有怪兽都打败啦！", "f_n_gomora": "哥莫拉！", "f_i_gomora": "古代怪兽哥莫拉，头上有大大的角，力气超级大，还会钻进地底下！", "f_n_eleking": "艾雷王！", "f_i_eleking": "艾雷王全身白色带黑点点，头上的角会转圈圈，尾巴还能放电！", "f_n_redking": "雷德王！", "f_i_redking": "雷德王脑袋小小的，身体大大的，力气很大，最喜欢扔大石头！", "f_n_baltan": "巴尔坦星人！", "f_i_baltan": "巴尔坦星人有一对大钳子手，会变出好多个分身，还会呋呋呋地笑！", "f_n_kingjoe": "金古桥！", "f_i_kingjoe": "金古桥是宇宙人造的超级机器人，身体硬邦邦，还能分成四块再合起来！", "f_n_zetton": "杰顿！", "f_i_zetton": "杰顿是最厉害的宇宙恐龙，曾经打败过初代奥特曼，还能把光线吸收掉！", "n_orig": "初代奥特曼！", "n_tiga": "迪迦奥特曼！", "n_zero": "赛罗奥特曼！", "n_ginga": "银河奥特曼！", "n_zeta": "泽塔奥特曼！", "n_trigger": "特利迦奥特曼！", "n_decker": "德凯奥特曼！", "n_blazar": "布莱泽奥特曼！", "n_arc": "阿克奥特曼！"};
+const IMG={"h": {}, "m": {}};
 /* ---------- 奥特曼外观配置 ---------- */
 const C={R:'#D21F2B',DR:'#A3121C',B:'#2456C8',BL:'#3E9BE8',P:'#6A39B4',K:'#2B2F3B',G:'#E1B23F',S:'#D8DDE6',O:'#EC7A2F',GR:'#8B93A5',T:'#1FA7A0'};
 const classic=a=>[['sides',a],['legOut',a],['upper',a]];
@@ -442,7 +459,8 @@ function heroSVG(id,opt){
 }
 
 
-const HEROES=[['orig','初代'],['tiga','迪迦'],['zero','赛罗'],['zeta','泽塔'],['trigger','特利迦'],['decker','德凯'],['blazar','布莱泽'],['arc','阿克']];
+const HNAMES={"orig": "初代", "seven": "赛文", "jack": "杰克", "ace": "艾斯", "taro": "泰罗", "leo": "雷欧", "astra": "阿斯特拉", "zoffy": "佐菲", "father": "奥特之父", "mother": "奥特之母", "king": "奥特之王", "joneus": "乔尼亚斯", "eighty": "爱迪", "yullian": "尤莉安", "great": "葛雷", "powered": "帕瓦特", "tiga": "迪迦", "dyna": "戴拿", "gaia": "盖亚", "agul": "阿古茹", "neos": "奈欧斯", "seven21": "赛文21", "cosmos": "高斯", "nexus": "奈克瑟斯", "noa": "诺亚", "max": "麦克斯", "xenon": "杰诺", "mebius": "梦比优斯", "hikari": "希卡利", "sevenx": "赛文X", "zero": "赛罗", "ginga": "银河", "victory": "维克特利", "x": "艾克斯", "orb": "欧布", "geed": "捷德", "rosso": "罗索", "blu": "布鲁", "grigio": "格丽乔", "taiga": "泰迦", "titas": "泰塔斯", "fuma": "风马", "zeta": "泽塔", "trigger": "特利迦", "decker": "德凯", "blazar": "布莱泽", "arc": "阿克", "omega": "欧米伽", "teo": "提欧"};
+const HEROES=(()=>{ const base=['orig','tiga','zero','zeta','trigger','decker','blazar','arc']; const ids=[...Object.keys(IMG.h),...base.filter(x=>!IMG.h[x])]; return ids.map(id=>[id,HNAMES[id]||id]); })();
 
 /* ---------- 怪兽（特摄质感：皮肤纹理 + 侧光 + 发光眼睛） ---------- */
 function shade(id,c,dir){ return `<linearGradient id="${id}" x1="${dir?1:0}" y1="0" x2="${dir?0:1}" y2="1"><stop offset="0" stop-color="${mix(c,.28)}"/><stop offset=".45" stop-color="${c}"/><stop offset="1" stop-color="${mix(c,-.55)}"/></linearGradient>`; }
@@ -543,6 +561,11 @@ function monsterSVG(id){
   }
   return `<svg viewBox="0 -10 260 310" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>${d}</defs><g filter="url(#${u}sk)">${b}</g><g filter="url(#${u}gl)" opacity=".95">${g}</g>${g.replace(/fill="#FF[0-9A-F]{4}"/g,'fill="#FFF6C8" opacity=".9"')}</svg>`;
 }
+
+/* ---------- 玩具照片（有就用照片，没有就用手绘） ---------- */
+function photoTag(p){ return `<img class="photo${p.flip?' mir':''}" src="${p.src}" alt="" draggable="false">`; }
+function heroArt(id,opt){ const p=IMG.h[id]; return p?photoTag(p):heroSVG(id,opt); }
+function monArt(id){ const p=IMG.m[id]; return p?photoTag(p):monsterSVG(id); }
 
 /* ---------- 存档 ---------- */
 const KEY='ultra-fight-v1';
@@ -708,16 +731,16 @@ function grainLoop(){ gt++; if(gt%3===0&&grain.width>0&&grain.height>0){ const w
 
 /* ---------- 战斗 ---------- */
 let current=null, inFight=false, hp=1, energy=0, attackTimer=null, shieldUntil=0, shieldCool=0, timerRed=false, beepTimer=null, punchAt=0, beams=0, fightStart=0, hits=0, saidFull=false, saidDizzy=false, busy=false, warned=0;
-function heroPoint(px,py){ const r=heroEl.getBoundingClientRect(), s=stage.getBoundingClientRect(); return {x:r.left-s.left+(1-px/200)*r.width, y:r.top-s.top+((py+8)/270)*r.height}; }
+function heroPoint(px,py){ const r=heroEl.getBoundingClientRect(), s=stage.getBoundingClientRect(); const ph=heroEl.hasAttribute('data-photo'); return {x:r.left-s.left+(ph?(200-px)/200:(1-px/200))*r.width, y:r.top-s.top+((py+8)/270)*r.height}; }
 function monPoint(px,py){ const r=monEl.getBoundingClientRect(), s=stage.getBoundingClientRect(); return {x:r.left-s.left+(px/260)*r.width, y:r.top-s.top+((py+10)/310)*r.height}; }
-function setHero(pose){ $('#heroArt').innerHTML=heroSVG(save.hero,{real:1,pose:pose||'stand',noFx:1,timerRed}); }
+function setHero(pose){ const ph=!!IMG.h[save.hero]; heroEl.toggleAttribute('data-photo',ph); $('#heroArt').innerHTML=heroArt(save.hero,{real:1,pose:pose||'stand',noFx:1,timerRed}); }
 function setBars(){ $('#energy i').style.width=(energy*100)+'%'; $('#mhp i').style.width=(Math.max(0,hp)*100)+'%';
   const b=$('#bBeam'); b.disabled=energy<1; b.classList.toggle('ready',energy>=1); }
 function startFight(mon){
   current=mon; inFight=true; hp=1; energy=0; beams=0; hits=0; timerRed=false; saidFull=false; saidDizzy=false; busy=true; warned=0;
   ['#title','#pickHero','#pickMonster','#book','#win'].forEach(s=>$(s).hidden=true);
   heroEl.style.opacity='0'; monEl.style.opacity='0'; monEl.className='actor'; heroEl.className='actor';
-  $('#monArt').innerHTML=monsterSVG(mon.id); setHero('stand');
+  $('#monArt').innerHTML=monArt(mon.id); setHero('stand');
   $('#ctimer').classList.remove('red'); layout(); setBars();
   $('#hud').hidden=false; $('#controls').hidden=true;
   warm(['f_go','f_good1','f_good2','f_warn','f_block','f_ouch','f_full','f_timer','f_beam','f_dizzy','f_win','f_absorb','f_n_'+mon.id,'f_i_'+mon.id]);
@@ -801,7 +824,7 @@ function victory(b){
   const first=!save.beaten[current.id]; save.beaten[current.id]=(save.beaten[current.id]||0)+1; persist();
   setTimeout(()=>{
     $('#hud').hidden=true; $('#controls').hidden=true; $('#rotateTip').hidden=true;
-    $('#winArt').innerHTML=monsterSVG(current.id); $('#winName').textContent=current.name; $('#winIntro').textContent=current.intro; $('#win').hidden=false;
+    $('#winArt').innerHTML=monArt(current.id); $('#winName').textContent=current.name; $('#winIntro').textContent=current.intro; $('#win').hidden=false;
     const all=MONSTERS.every(m=>save.beaten[m.id]);
     const unlockedNew=first&&MONSTERS.findIndex(m=>m.id===current.id)<MONSTERS.length-1;
     say(['f_win','f_n_'+current.id,'f_i_'+current.id,...(all&&first?['f_allwin']:unlockedNew?['f_new']:[])]);
@@ -813,18 +836,18 @@ function leaveFight(){ inFight=false; busy=false; clearTimeout(attackTimer); cle
 /* ---------- 选人、选怪兽、图鉴 ---------- */
 function showHeroPick(){
   leaveFight(); ['#title','#pickMonster','#book','#win'].forEach(s=>$(s).hidden=true);
-  $('#heroGrid').innerHTML=HEROES.map(([id,n])=>`<button class="pick${id===save.hero?' on':''}" data-h="${id}"><div class="pa">${heroSVG(id,{real:1,pose:'stand'})}</div><div class="pn">${n}</div></button>`).join('');
+  $('#heroGrid').innerHTML=HEROES.map(([id,n])=>`<button class="pick${id===save.hero?' on':''}" data-h="${id}"><div class="pa">${heroArt(id,{real:1,pose:'stand'})}</div><div class="pn">${n}</div></button>`).join('');
   $('#pickHero').hidden=false; say(['f_pickHero']);
 }
 function showMonPick(){
   leaveFight(); ['#title','#pickHero','#book','#win'].forEach(s=>$(s).hidden=true);
   const n=unlockedCount();
-  $('#monGrid').innerHTML=MONSTERS.map((m,i)=>{ const lock=i>=n; return `<button class="pick${lock?' locked':''}" data-m="${m.id}" data-lock="${lock?1:''}"><div class="pa">${monsterSVG(m.id)}</div><div class="pn">${lock?'？？？':m.name}</div>${save.beaten[m.id]?'<span class="badge">打败过</span>':''}${lock?'<div class="q">?</div>':''}</button>`; }).join('');
+  $('#monGrid').innerHTML=MONSTERS.map((m,i)=>{ const lock=i>=n; return `<button class="pick${lock?' locked':''}" data-m="${m.id}" data-lock="${lock?1:''}"><div class="pa">${monArt(m.id)}</div><div class="pn">${lock?'？？？':m.name}</div>${save.beaten[m.id]?'<span class="badge">打败过</span>':''}${lock?'<div class="q">?</div>':''}</button>`; }).join('');
   $('#pickMonster').hidden=false; say(['f_pickMonster']);
 }
 function showBook(){
   ['#pickMonster','#win'].forEach(s=>$(s).hidden=true);
-  $('#bookGrid').innerHTML=MONSTERS.map(m=>{ const got=save.beaten[m.id]; return `<button class="pick${got?'':' locked'}" data-b="${m.id}"><div class="pa">${monsterSVG(m.id)}</div><div class="pn">${got?m.name:'？？？'}</div>${got?`<span class="badge">×${got}</span>`:'<div class="q">?</div>'}</button>`; }).join('');
+  $('#bookGrid').innerHTML=MONSTERS.map(m=>{ const got=save.beaten[m.id]; return `<button class="pick${got?'':' locked'}" data-b="${m.id}"><div class="pa">${monArt(m.id)}</div><div class="pn">${got?m.name:'？？？'}</div>${got?`<span class="badge">×${got}</span>`:'<div class="q">?</div>'}</button>`; }).join('');
   $('#bookIntro').hidden=true; $('#book').hidden=false; say(['f_book']);
 }
 $('#heroGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-h]'); if(!b) return; sfx.tap(); save.hero=b.dataset.h; persist(); say(['n_'+save.hero]); setTimeout(showMonPick,900); });
@@ -847,7 +870,7 @@ $('#startBtn').addEventListener('click',()=>{
   sfx.henshin(); $('#title').hidden=true; CLIP.f_hello={url:AUDIO.f_hello,p:Promise.resolve(AUDIO.f_hello)};
   setTimeout(showHeroPick,1800);
 });
-$('#titleArt').innerHTML=heroSVG('tiga',{real:1,pose:'beam',noFx:1}).replace('<svg','<svg style="height:100%;width:auto"')+monsterSVG('gomora').replace('<svg','<svg style="height:100%;width:auto"');
+$('#titleArt').innerHTML=[heroArt(save.hero||'tiga',{real:1,pose:'beam',noFx:1}),monArt('gomora')].map(x=>x.replace(/^<(svg|img)/,'<$1 style="height:100%;width:auto;max-width:45vw;object-fit:contain"')).join('');
 addEventListener('resize',()=>layout());
 layout(); requestAnimationFrame(loop); if(!reduce) requestAnimationFrame(grainLoop);
 window.__fight={startFight,MONSTERS,save,punch,fireBeam,shieldUp,monsterAttack};
