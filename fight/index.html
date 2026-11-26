@@ -1023,7 +1023,7 @@ function shieldUp(){
   Object.assign(s.style,{width:r*2+'px',height:r*2+'px',left:(c.x-r)+'px',top:(c.y-r)+'px'}); stage.appendChild(s);
   $('#bShield').classList.add('cool'); setTimeout(()=>{ s.remove(); $('#bShield').classList.remove('cool'); if(curPose==='guard'&&!busy) setPose('stand'); },1300);
 }
-function scheduleAttack(ms){ clearTimeout(attackTimer); attackTimer=setTimeout(monsterAttack,ms||(3000+Math.random()*1500)); // 两次攻击之间歇 3~4.5 秒（原来 5.2~7.6 秒） }
+function scheduleAttack(ms){ clearTimeout(attackTimer); attackTimer=setTimeout(monsterAttack,ms||(3000+Math.random()*1500)); /* 两次攻击之间歇 3~4.5 秒 */ }
 function monsterAttack(){
   if(!inFight||busy||hp<=0) return;
   monEl.classList.add('charge'); $('#bShield').classList.add('alert'); sfx.roar(); const mk=document.createElement('div'); mk.className='warnmark'; mk.textContent='!'; const p=monPoint(70,0); mk.style.left=(p.x-20)+'px'; mk.style.top=(p.y-60)+'px'; stage.appendChild(mk);
